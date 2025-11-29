@@ -13,12 +13,46 @@ import {
     createRequirementTemplate
 } from "../utils/importUtils.js";
 
-// Generate requirement ID
+// Generate requirement ID - Now includes project identifier for uniqueness with retry mechanism
 const generateRequirementId = async (projectId) => {
+    // Get the project to use its identifier
+    const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { id: true }
+    });
+    
+    // Use first 8 characters of project ID for uniqueness
+    const projectPrefix = project.id.substring(0, 8).toUpperCase();
+    
+    // Count existing requirements for this project
     const count = await prisma.requirement.count({
         where: { projectId }
     });
-    return `REQ-${String(count + 1).padStart(3, '0')}`;
+    
+    let reqId;
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    // Try to generate a unique ID with retry mechanism
+    while (attempts < maxAttempts) {
+        const counter = count + 1 + attempts;
+        reqId = `REQ-${projectPrefix}-${String(counter).padStart(3, '0')}`;
+        
+        // Check if this ID already exists
+        const existing = await prisma.requirement.findUnique({
+            where: { requirementId: reqId }
+        });
+        
+        if (!existing) {
+            return reqId;
+        }
+        
+        attempts++;
+    }
+    
+    // If all attempts failed, use timestamp for uniqueness
+    const timestamp = Date.now().toString(36).toUpperCase();
+    return `REQ-${projectPrefix}-${timestamp}`;
 };
 
 // Create requirement
@@ -70,8 +104,9 @@ export const createRequirement = async (req, res) => {
         // Generate requirement ID
         const requirementId = await generateRequirementId(projectId);
 
-        // Create requirement with initial history entry
-        const requirement = await prisma.requirement.create({
+        try {
+            // Create requirement with initial history entry
+            const requirement = await prisma.requirement.create({
             data: {
                 projectId,
                 requirementId,
@@ -101,7 +136,7 @@ export const createRequirement = async (req, res) => {
                     }
                 }
             }
-        });
+            });
 
         // Add stakeholder relationships if provided
         if (stakeholderIds && stakeholderIds.length > 0) {
@@ -132,10 +167,86 @@ export const createRequirement = async (req, res) => {
             }
         });
 
-        res.json({ requirement: completeRequirement, message: "Requirement created successfully" });
+            res.json({ requirement: completeRequirement, message: "Requirement created successfully" });
+        } catch (createError) {
+            // If we get a unique constraint error, try again with a new ID
+            if (createError.code === 'P2002' && createError.meta?.target?.includes('requirementId')) {
+                console.log('Requirement ID collision detected, generating new ID...');
+                
+                // Generate a fallback ID with timestamp
+                const timestamp = Date.now().toString(36).toUpperCase();
+                const fallbackId = `REQ-${projectId.substring(0, 8).toUpperCase()}-${timestamp}`;
+                
+                // Retry with the fallback ID
+                const requirement = await prisma.requirement.create({
+                    data: {
+                        projectId,
+                        requirementId: fallbackId,
+                        title,
+                        description,
+                        acceptanceCriteria: acceptanceCriteria || [],
+                        source,
+                        type: type || "FUNCTIONAL",
+                        priority: priority || "MEDIUM",
+                        status: status || "DRAFT",
+                        ownerId: userId,
+                        parentId,
+                        estimatedEffort,
+                        tags: tags || [],
+                        history: {
+                            create: {
+                                userId,
+                                action: "CREATED",
+                                version: 1,
+                                changes: {
+                                    title,
+                                    description,
+                                    type: type || "FUNCTIONAL",
+                                    priority: priority || "MEDIUM",
+                                    status: status || "DRAFT"
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Add stakeholder relationships if provided
+                if (stakeholderIds && stakeholderIds.length > 0) {
+                    const stakeholderRelations = stakeholderIds.map(stakeholderId => ({
+                        requirementId: requirement.id,
+                        stakeholderId,
+                        role: "REVIEWER"
+                    }));
+
+                    await prisma.stakeholderRequirement.createMany({
+                        data: stakeholderRelations
+                    });
+                }
+
+                // Fetch the complete requirement with relations
+                const completeRequirement = await prisma.requirement.findUnique({
+                    where: { id: requirement.id },
+                    include: {
+                        owner: true,
+                        parent: true,
+                        children: true,
+                        stakeholders: {
+                            include: {
+                                stakeholder: true
+                            }
+                        },
+                        history: true
+                    }
+                });
+
+                res.json({ requirement: completeRequirement, message: "Requirement created successfully" });
+            } else {
+                throw createError;
+            }
+        }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: error.code || error.message });
+        res.status(500).json({ message: error.message || "Failed to create requirement" });
     }
 };
 
