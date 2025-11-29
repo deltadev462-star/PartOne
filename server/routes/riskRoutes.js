@@ -1,6 +1,5 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   createRisk,
   getProjectRisks,
   getRisk,
@@ -18,11 +17,9 @@ const {
   getRiskAnalytics,
   linkToRequirement,
   linkToTask
-} = require('../controllers/riskController');
-const authMiddleware = require('../middlewares/authMiddleware');
+} from '../controllers/riskController.js';
 
-// Apply auth middleware to all routes
-router.use(authMiddleware);
+const router = express.Router();
 
 // Risk CRUD operations
 router.post('/', createRisk);
@@ -146,4 +143,4 @@ router.put('/bulk-update', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

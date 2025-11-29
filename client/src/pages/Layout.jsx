@@ -60,7 +60,7 @@ const Layout = () => {
     }
 
     return (
-        <div className="flex bg-white dark:bg-zinc-950 text-gray-900 dark:text-slate-100">
+        <div className="flex bg-white dark:bg-zinc-950 text-gray-900 dark:text-slate-100 overflow-x-hidden">
             <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
             <div className="flex-1 flex flex-col h-screen">
                 <Navbar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />

@@ -3,13 +3,6 @@ import { lazy, Suspense } from "react";
 import { Toaster } from "react-hot-toast";
  
 import Layout from "./pages/Layout";
-
-
-
-
-
-
-
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Team = lazy(() => import("./pages/Team"));
@@ -21,6 +14,7 @@ const Requirements = lazy(() => import("./pages/Requirements"));
 const RiskManagement = lazy(() => import("./pages/RiskManagement"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const Reports = lazy(() => import("./pages/Reports"));
+const Meetings = lazy(() => import("./pages/Meetings"));
  
 
  const LoadingFallback = () => (
@@ -89,6 +83,22 @@ const App = () => {
             element={
               <Suspense fallback={<LoadingFallback />}>
                 <ProjectDetails />
+              </Suspense>
+            }
+          />
+          <Route
+            path="meetings"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Meetings />
+              </Suspense>
+            }
+          />
+          <Route
+            path="meetings/:projectId"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Meetings />
               </Suspense>
             }
           />

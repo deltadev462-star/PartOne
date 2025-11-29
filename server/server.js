@@ -11,6 +11,7 @@ import stakeholderRouter from "./routes/stakeholderRoutes.js";
 import rfcRouter from "./routes/rfcRoutes.js";
 import reportRouter from "./routes/reportRoutes.js";
 import riskRouter from "./routes/riskRoutes.js";
+import meetingRouter from "./routes/meetingRoutes.js";
 import { protect } from './middlewares/authMiddleware.js';
 import { clerkMiddleware } from '@clerk/express';
 import { inngest, functions } from './inngest/index.js';
@@ -42,6 +43,7 @@ app.use("/api/stakeholders", protect, stakeholderRouter);
 app.use("/api/rfcs", protect, rfcRouter);
 app.use("/api/risks", protect, riskRouter);
 app.use("/api/reports", protect, reportRouter);
+app.use("/api", protect, meetingRouter); // Meeting routes directly on /api
 
 const PORT = process.env.PORT || 5000;
 

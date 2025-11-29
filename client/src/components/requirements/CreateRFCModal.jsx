@@ -154,7 +154,7 @@ const CreateRFCModal = ({
                             <TabsTrigger value="estimate">{t('requirements.rfc.estimates')}</TabsTrigger>
                         </TabsList> */}
 
-                        <ScrollArea className="h-[400px] mt-4">
+                        <ScrollArea className="h-[450px] mt-4">
                             <TabsContent value="basic" className="space-y-4">
                                 <div className="space-y-2">
                                     <Label>{t('requirements.rfc.requirement')} <span className="text-red-500">*</span></Label>

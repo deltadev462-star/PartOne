@@ -1,4 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // Create a new risk
@@ -778,7 +778,7 @@ async function createHistoryEntry(riskId, userId, action, details) {
   }
 }
 
-module.exports = {
+export {
   createRisk,
   getProjectRisks,
   getRisk,
