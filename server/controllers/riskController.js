@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../configs/prisma.js';
 
 // Create a new risk
 const createRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const {
       projectId,
       title,
@@ -31,6 +31,19 @@ const createRisk = async (req, res) => {
       relatedRisks
     } = req.body;
 
+    // Convert string values to appropriate types
+    const detectabilityValue = detectability ? (
+      typeof detectability === 'string' ?
+        (detectability === 'LOW' ? 1 : detectability === 'MEDIUM' ? 3 : detectability === 'HIGH' ? 5 : parseInt(detectability))
+        : detectability
+    ) : null;
+    
+    const velocityValue = velocity ? (
+      typeof velocity === 'string' ?
+        (velocity === 'LOW' ? 1 : velocity === 'MEDIUM' ? 3 : velocity === 'HIGH' ? 5 : parseInt(velocity))
+        : velocity
+    ) : null;
+
     const risk = await prisma.risk.create({
       data: {
         projectId,
@@ -51,13 +64,13 @@ const createRisk = async (req, res) => {
         indicators: indicators || [],
         existingControls,
         proposedControls,
-        detectability,
-        velocity,
+        detectability: detectabilityValue,
+        velocity: velocityValue,
         estimatedCost: estimatedCost ? parseFloat(estimatedCost) : null,
         estimatedScheduleImpact,
         tags: tags || [],
         relatedRisks: relatedRisks || [],
-        createdBy: req.user.userId
+        createdBy: userId
       },
       include: {
         project: true,
@@ -78,6 +91,7 @@ const createRisk = async (req, res) => {
 // Get all risks for a project
 const getProjectRisks = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { projectId } = req.params;
     const {
       category,
@@ -134,6 +148,7 @@ const getProjectRisks = async (req, res) => {
 // Get single risk
 const getRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
 
     const risk = await prisma.risk.findUnique({
@@ -176,6 +191,7 @@ const getRisk = async (req, res) => {
 // Update risk
 const updateRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const updateData = { ...req.body };
 
@@ -200,7 +216,7 @@ const updateRisk = async (req, res) => {
       where: { id: riskId },
       data: {
         ...updateData,
-        updatedBy: req.user.userId
+        updatedBy: userId
       },
       include: {
         project: true,
@@ -211,7 +227,7 @@ const updateRisk = async (req, res) => {
     });
 
     // Create history entry
-    await createHistoryEntry(riskId, req.user.userId, 'UPDATE', {
+    await createHistoryEntry(riskId, userId, 'UPDATE', {
       oldValues: oldRisk,
       newValues: risk
     });
@@ -226,6 +242,7 @@ const updateRisk = async (req, res) => {
 // Delete risk
 const deleteRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
 
     await prisma.risk.delete({
@@ -242,6 +259,7 @@ const deleteRisk = async (req, res) => {
 // Add comment to risk
 const addComment = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { content } = req.body;
 
@@ -249,7 +267,7 @@ const addComment = async (req, res) => {
       data: {
         riskId,
         content,
-        userId: req.user.userId
+        userId
       },
       include: {
         user: true
@@ -266,6 +284,7 @@ const addComment = async (req, res) => {
 // Update risk status
 const updateRiskStatus = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { status } = req.body;
 
@@ -273,7 +292,7 @@ const updateRiskStatus = async (req, res) => {
       where: { id: riskId },
       data: {
         status,
-        updatedBy: req.user.userId
+        updatedBy: userId
       },
       include: {
         project: true
@@ -281,7 +300,7 @@ const updateRiskStatus = async (req, res) => {
     });
 
     // Create history entry
-    await createHistoryEntry(riskId, req.user.userId, 'STATUS_CHANGE', {
+    await createHistoryEntry(riskId, userId, 'STATUS_CHANGE', {
       newStatus: status
     });
 
@@ -295,6 +314,7 @@ const updateRiskStatus = async (req, res) => {
 // Get risk matrix data
 const getRiskMatrix = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { projectId } = req.params;
 
     const risks = await prisma.risk.findMany({
@@ -333,6 +353,7 @@ const getRiskMatrix = async (req, res) => {
 // Perform risk assessment
 const assessRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const {
       likelihood,
@@ -364,7 +385,7 @@ const assessRisk = async (req, res) => {
         riskScore,
         riskLevel: getRiskLevel(riskScore),
         lastAssessmentDate: new Date(),
-        assessedBy: req.user.userId
+        assessedBy: userId
       },
       include: {
         project: true
@@ -372,7 +393,7 @@ const assessRisk = async (req, res) => {
     });
 
     // Create history entry
-    await createHistoryEntry(riskId, req.user.userId, 'ASSESSMENT', {
+    await createHistoryEntry(riskId, userId, 'ASSESSMENT', {
       riskScore,
       assessmentData: req.body
     });
@@ -387,6 +408,7 @@ const assessRisk = async (req, res) => {
 // Create or update response plan
 const upsertResponsePlan = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const {
       responseStrategy,
@@ -418,7 +440,7 @@ const upsertResponsePlan = async (req, res) => {
       responseEffectiveness: responseEffectiveness || 50,
       acceptanceCriteria,
       triggers: triggers || [],
-      updatedBy: req.user.userId
+      updatedBy: userId
     };
 
     let responsePlan;
@@ -435,7 +457,7 @@ const upsertResponsePlan = async (req, res) => {
         data: {
           ...planData,
           riskId,
-          createdBy: req.user.userId
+          createdBy: userId
         },
         include: {
           actions: true
@@ -487,6 +509,7 @@ const upsertResponsePlan = async (req, res) => {
 // Add risk indicator
 const addIndicator = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { name, threshold, currentValue, active } = req.body;
 
@@ -511,6 +534,7 @@ const addIndicator = async (req, res) => {
 // Update risk indicator
 const updateIndicator = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId, indicatorId } = req.params;
     const { currentValue, active } = req.body;
 
@@ -545,6 +569,7 @@ const updateIndicator = async (req, res) => {
 // Escalate risk
 const escalateRisk = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { escalatedTo, escalationNotes, priority } = req.body;
 
@@ -561,7 +586,7 @@ const escalateRisk = async (req, res) => {
     });
 
     // Create history entry
-    await createHistoryEntry(riskId, req.user.userId, 'ESCALATION', {
+    await createHistoryEntry(riskId, userId, 'ESCALATION', {
       escalatedTo,
       escalationNotes
     });
@@ -579,6 +604,7 @@ const escalateRisk = async (req, res) => {
 // Get risk history
 const getRiskHistory = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
 
     const history = await prisma.riskHistory.findMany({
@@ -599,6 +625,7 @@ const getRiskHistory = async (req, res) => {
 // Get risk analytics
 const getRiskAnalytics = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { projectId } = req.params;
     const { startDate, endDate } = req.query;
 
@@ -669,6 +696,7 @@ const getRiskAnalytics = async (req, res) => {
 // Link risk to requirement
 const linkToRequirement = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { requirementId } = req.body;
 
@@ -689,6 +717,7 @@ const linkToRequirement = async (req, res) => {
 // Link risk to task
 const linkToTask = async (req, res) => {
   try {
+    const { userId } = await req.auth();
     const { riskId } = req.params;
     const { taskId } = req.body;
 

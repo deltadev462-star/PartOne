@@ -1248,7 +1248,11 @@
       "unlikely": "غير محتمل",
       "possible": "محتمل",
       "likely": "مرجح",
-      "almostCertain": "شبه مؤكد"
+      "almostcertain": "شبه مؤكد",
+      "almost_certain": "شبه مؤكد",
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع"
     },
     "impact": {
       "label": "التأثير",
@@ -1540,7 +1544,8 @@
       "low": "منخفض",
       "medium": "متوسط",
       "high": "مرتفع",
-      "critical": "حرج"
+      "critical": "حرج",
+      "unknown": "غير محدد"
     },
     "status": {
       "identified": "محدد",

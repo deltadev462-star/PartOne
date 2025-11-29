@@ -1248,7 +1248,11 @@
       "unlikely": "Unlikely",
       "possible": "Possible",
       "likely": "Likely",
-      "almostCertain": "Almost Certain"
+      "almostcertain": "Almost Certain",
+      "almost_certain": "Almost Certain",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
     },
     "impact": {
       "label": "Impact",
@@ -1540,7 +1544,8 @@
       "low": "Low",
       "medium": "Medium",
       "high": "High",
-      "critical": "Critical"
+      "critical": "Critical",
+      "unknown": "Unknown"
     },
     "status": {
       "identified": "Identified",

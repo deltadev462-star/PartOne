@@ -64,7 +64,7 @@ const Meetings = () => {
     const [viewMode, setViewMode] = useState('list'); // list, calendar, day, week, month
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    
+        
     // Meetings state
     const [meetings, setMeetings] = useState([]);
     const [upcomingMeetings, setUpcomingMeetings] = useState([]);
@@ -123,7 +123,7 @@ const Meetings = () => {
                 limit: 100
             };
 
-            const response = await meetingService.getMeetings(params);
+            const response = await meetingService.getMeetings(params, token);
             const allMeetings = response.meetings || [];
             
             setMeetings(allMeetings);
@@ -161,7 +161,7 @@ const Meetings = () => {
                 days: 7
             };
 
-            const upcoming = await meetingService.getUpcomingMeetings(params);
+            const upcoming = await meetingService.getUpcomingMeetings(params, token);
             // This is specifically for the user's upcoming meetings widget
         } catch (error) {
             console.error('Error fetching upcoming meetings:', error);
@@ -191,7 +191,7 @@ const Meetings = () => {
                 ownerId: userId
             };
 
-            await meetingService.createMeeting(dataToSend);
+            await meetingService.createMeeting(dataToSend, token);
             toast.success('Meeting created successfully');
             setIsCreateModalOpen(false);
             fetchMeetings();
@@ -209,7 +209,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.updateMeeting(meetingId, updateData);
+            await meetingService.updateMeeting(meetingId, updateData, token);
             toast.success('Meeting updated successfully');
             fetchMeetings();
         } catch (error) {
@@ -228,7 +228,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.deleteMeeting(meetingId);
+            await meetingService.deleteMeeting(meetingId, token);
             toast.success('Meeting deleted successfully');
             setSelectedMeeting(null);
             fetchMeetings();
@@ -246,7 +246,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.updateMeetingStatus(meetingId, status);
+            await meetingService.updateMeetingStatus(meetingId, status, token);
             toast.success('Meeting status updated');
             fetchMeetings();
         } catch (error) {
@@ -263,7 +263,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.markAttendance(meetingId, participantId, attended);
+            await meetingService.markAttendance(meetingId, participantId, attended, token);
             toast.success('Attendance marked');
             fetchMeetings();
         } catch (error) {
@@ -280,7 +280,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.finalizeMoM(meetingId, userId);
+            await meetingService.finalizeMoM(meetingId, userId, token);
             toast.success('Minutes of Meeting finalized');
             fetchMeetings();
         } catch (error) {
@@ -297,7 +297,7 @@ const Meetings = () => {
                 return;
             }
 
-            await meetingService.distributeMoM(meetingId, emails);
+            await meetingService.distributeMoM(meetingId, emails, token);
             toast.success('MoM distributed successfully');
             fetchMeetings();
         } catch (error) {
@@ -630,7 +630,8 @@ const Meetings = () => {
                     }}
                     meeting={selectedMeeting}
                     onSave={async (momData) => {
-                        await meetingService.updateMoM(selectedMeeting.id, momData);
+                        const token = await getToken();
+                        await meetingService.updateMoM(selectedMeeting.id, momData, token);
                         toast.success('Minutes of Meeting saved');
                         fetchMeetings();
                     }}

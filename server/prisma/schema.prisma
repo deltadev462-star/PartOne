@@ -160,6 +160,7 @@ model Project {
     stakeholders Stakeholder[]
     meetings     Meeting[]
     rfcs         RFC[]
+    risks        Risk[]
 }
 
 model ProjectMember {
@@ -201,6 +202,7 @@ model Task {
     dependencies       TaskDependency[]  @relation("DependentTask")
     dependents         TaskDependency[]  @relation("DependsOnTask")
     meetingActionItems MeetingActionTask[]
+    riskLinks          RiskTaskLink[]
 }
 
 model Comment {
@@ -466,6 +468,7 @@ model Requirement {
     meetingLinks    MeetingRequirement[]
     rfcs            RFC[]
     testCases       RequirementTestCase[]
+    riskLinks       RiskRequirementLink[]
 }
 
 // Stakeholder-Requirement relationship
@@ -726,4 +729,236 @@ model User {
     meetingParticipations MeetingParticipant[]
     meetingAttachments    MeetingAttachment[]
     meetingSignoffs       MeetingSignoff[]
+    riskComments          RiskComment[]
+    riskHistory           RiskHistory[]
+}
+
+// Risk-related enums
+enum RiskStatus {
+    IDENTIFIED
+    ANALYZING
+    MONITORING
+    MITIGATED
+    CLOSED
+    ACCEPTED
+}
+
+enum RiskCategory {
+    TECHNICAL
+    SCHEDULE
+    BUDGET
+    RESOURCE
+    SCOPE
+    QUALITY
+    EXTERNAL
+    ORGANIZATIONAL
+}
+
+enum RiskLikelihood {
+    RARE
+    UNLIKELY
+    POSSIBLE
+    LIKELY
+    ALMOST_CERTAIN
+}
+
+enum RiskImpact {
+    INSIGNIFICANT
+    MINOR
+    MODERATE
+    MAJOR
+    CATASTROPHIC
+}
+
+enum RiskLevel {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+}
+
+enum RiskTrend {
+    INCREASING
+    STABLE
+    DECREASING
+}
+
+enum ResponseStrategy {
+    AVOID
+    MITIGATE
+    TRANSFER
+    ACCEPT
+    ESCALATE
+}
+
+// Risk model
+model Risk {
+    id                      String                  @id @default(uuid())
+    projectId               String
+    riskId                  String                  @unique
+    title                   String
+    description             String?
+    category                RiskCategory            @default(TECHNICAL)
+    
+    // Risk Assessment
+    likelihood              RiskLikelihood          @default(POSSIBLE)
+    impact                  RiskImpact              @default(MODERATE)
+    severity                RiskImpact?             // Legacy field, same as impact
+    riskLevel               RiskLevel               @default(MEDIUM)
+    riskScore               Int                     @default(0)
+    
+    // Risk Details
+    owner                   String?
+    status                  RiskStatus              @default(IDENTIFIED)
+    riskStatement           String?
+    cause                   String?
+    effect                  String?
+    triggers                Json                    @default("[]")
+    indicators              Json                    @default("[]")
+    
+    // Controls
+    existingControls        String?
+    proposedControls        String?
+    
+    // Advanced Assessment
+    detectability           Int?                    // 1-5 scale
+    velocity                Int?                    // Speed of risk materialization
+    interconnectedness      Int?                    // How connected to other risks
+    controlEffectiveness    Int?                    // Effectiveness of controls (0-100)
+    
+    // Financial Impact
+    estimatedCost           Float?
+    estimatedScheduleImpact String?
+    
+    // Residual Risk
+    residualRisk            Float?
+    responseImplemented     Boolean                 @default(false)
+    
+    // Tracking
+    trend                   RiskTrend?
+    lastAssessmentDate      DateTime?
+    assessedBy              String?
+    
+    // Escalation
+    escalated               Boolean                 @default(false)
+    escalatedTo             String?
+    escalationDate          DateTime?
+    escalationNotes         String?
+    escalationPriority      String?
+    escalationStatus        String?
+    
+    // Metadata
+    tags                    Json                    @default("[]")
+    relatedRisks           Json                    @default("[]")
+    createdBy               String
+    updatedBy               String?
+    createdAt               DateTime                @default(now())
+    updatedAt               DateTime                @updatedAt
+    
+    project                 Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    comments                RiskComment[]
+    history                 RiskHistory[]
+    linkedRequirements      RiskRequirementLink[]
+    linkedTasks            RiskTaskLink[]
+    responsePlans          RiskResponsePlan[]
+    riskIndicators         RiskIndicator[]
+}
+
+// Risk Comments
+model RiskComment {
+    id        String   @id @default(uuid())
+    riskId    String
+    content   String
+    userId    String
+    createdAt DateTime @default(now())
+    
+    risk      Risk     @relation(fields: [riskId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id])
+}
+
+// Risk History
+model RiskHistory {
+    id        String   @id @default(uuid())
+    riskId    String
+    userId    String
+    action    String   // UPDATE, STATUS_CHANGE, ASSESSMENT, ESCALATION, etc.
+    details   String?  // JSON string with details
+    createdAt DateTime @default(now())
+    
+    risk      Risk     @relation(fields: [riskId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id])
+}
+
+// Risk Response Plan
+model RiskResponsePlan {
+    id                    String                @id @default(uuid())
+    riskId                String                @unique
+    responseStrategy      ResponseStrategy      @default(MITIGATE)
+    mitigationStrategy    String?
+    contingencyPlan       String?
+    fallbackPlan          String?
+    responseOwner         String?
+    responseDeadline      DateTime?
+    responseCost          Float?
+    responseEffectiveness Int                   @default(50)
+    acceptanceCriteria    String?
+    triggers              Json                  @default("[]")
+    createdBy             String
+    updatedBy             String?
+    createdAt             DateTime              @default(now())
+    updatedAt             DateTime              @updatedAt
+    
+    risk                  Risk                  @relation(fields: [riskId], references: [id], onDelete: Cascade)
+    actions              RiskResponseAction[]
+}
+
+// Risk Response Actions
+model RiskResponseAction {
+    id              String            @id @default(uuid())
+    responsePlanId  String
+    description     String
+    status          String            @default("PENDING")
+    assignedTo      String?
+    dueDate         DateTime?
+    completedAt     DateTime?
+    
+    responsePlan    RiskResponsePlan  @relation(fields: [responsePlanId], references: [id], onDelete: Cascade)
+}
+
+// Risk Indicators
+model RiskIndicator {
+    id           String   @id @default(uuid())
+    riskId       String
+    name         String
+    threshold    Float
+    currentValue Float
+    active       Boolean  @default(true)
+    triggered    Boolean  @default(false)
+    lastUpdated  DateTime @default(now())
+    
+    risk         Risk     @relation(fields: [riskId], references: [id], onDelete: Cascade)
+}
+
+// Risk-Requirement Link
+model RiskRequirementLink {
+    id            String      @id @default(uuid())
+    riskId        String
+    requirementId String
+    
+    risk          Risk        @relation(fields: [riskId], references: [id], onDelete: Cascade)
+    requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+    
+    @@unique([riskId, requirementId])
+}
+
+// Risk-Task Link
+model RiskTaskLink {
+    id      String @id @default(uuid())
+    riskId  String
+    taskId  String
+    
+    risk    Risk   @relation(fields: [riskId], references: [id], onDelete: Cascade)
+    task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    
+    @@unique([riskId, taskId])
 }

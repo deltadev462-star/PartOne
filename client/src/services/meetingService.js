@@ -1,10 +1,14 @@
 import api from '../configs/api';
 
 // Meeting CRUD operations
-export const getMeetings = async (params = {}) => {
+export const getMeetings = async (params = {}, token) => {
     try {
         const queryString = new URLSearchParams(params).toString();
-        const response = await api.get(`/meetings${queryString ? `?${queryString}` : ''}`);
+        const response = await api.get(`/api/meetings${queryString ? `?${queryString}` : ''}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching meetings:', error);
@@ -12,9 +16,13 @@ export const getMeetings = async (params = {}) => {
     }
 };
 
-export const getMeetingById = async (id) => {
+export const getMeetingById = async (id, token) => {
     try {
-        const response = await api.get(`/meetings/${id}`);
+        const response = await api.get(`/api/meetings/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching meeting:', error);
@@ -22,9 +30,13 @@ export const getMeetingById = async (id) => {
     }
 };
 
-export const createMeeting = async (meetingData) => {
+export const createMeeting = async (meetingData, token) => {
     try {
-        const response = await api.post('/meetings', meetingData);
+        const response = await api.post('/api/meetings', meetingData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error creating meeting:', error);
@@ -32,9 +44,13 @@ export const createMeeting = async (meetingData) => {
     }
 };
 
-export const updateMeeting = async (id, meetingData) => {
+export const updateMeeting = async (id, meetingData, token) => {
     try {
-        const response = await api.put(`/meetings/${id}`, meetingData);
+        const response = await api.put(`/api/meetings/${id}`, meetingData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating meeting:', error);
@@ -42,9 +58,13 @@ export const updateMeeting = async (id, meetingData) => {
     }
 };
 
-export const deleteMeeting = async (id) => {
+export const deleteMeeting = async (id, token) => {
     try {
-        const response = await api.delete(`/meetings/${id}`);
+        const response = await api.delete(`/api/meetings/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error deleting meeting:', error);
@@ -53,9 +73,13 @@ export const deleteMeeting = async (id) => {
 };
 
 // Meeting status operations
-export const updateMeetingStatus = async (id, status) => {
+export const updateMeetingStatus = async (id, status, token) => {
     try {
-        const response = await api.patch(`/meetings/${id}/status`, { status });
+        const response = await api.patch(`/api/meetings/${id}/status`, { status }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating meeting status:', error);
@@ -64,9 +88,13 @@ export const updateMeetingStatus = async (id, status) => {
 };
 
 // MoM (Minutes of Meeting) operations
-export const updateMoM = async (id, momData) => {
+export const updateMoM = async (id, momData, token) => {
     try {
-        const response = await api.put(`/meetings/${id}/mom`, momData);
+        const response = await api.put(`/api/meetings/${id}/mom`, momData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating MoM:', error);
@@ -74,9 +102,13 @@ export const updateMoM = async (id, momData) => {
     }
 };
 
-export const finalizeMoM = async (id, userId) => {
+export const finalizeMoM = async (id, userId, token) => {
     try {
-        const response = await api.post(`/meetings/${id}/mom/finalize`, { userId });
+        const response = await api.post(`/api/meetings/${id}/mom/finalize`, { userId }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error finalizing MoM:', error);
@@ -84,9 +116,13 @@ export const finalizeMoM = async (id, userId) => {
     }
 };
 
-export const distributeMoM = async (id, emails) => {
+export const distributeMoM = async (id, emails, token) => {
     try {
-        const response = await api.post(`/meetings/${id}/mom/distribute`, { emails });
+        const response = await api.post(`/api/meetings/${id}/mom/distribute`, { emails }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error distributing MoM:', error);
@@ -95,11 +131,15 @@ export const distributeMoM = async (id, emails) => {
 };
 
 // Attendance and sign-off operations
-export const markAttendance = async (id, participantId, attended) => {
+export const markAttendance = async (id, participantId, attended, token) => {
     try {
-        const response = await api.patch(`/meetings/${id}/attendance`, { 
-            participantId, 
-            attended 
+        const response = await api.patch(`/api/meetings/${id}/attendance`, {
+            participantId,
+            attended
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         });
         return response.data;
     } catch (error) {
@@ -108,9 +148,13 @@ export const markAttendance = async (id, participantId, attended) => {
     }
 };
 
-export const addSignoff = async (id, signoffData) => {
+export const addSignoff = async (id, signoffData, token) => {
     try {
-        const response = await api.post(`/meetings/${id}/signoff`, signoffData);
+        const response = await api.post(`/api/meetings/${id}/signoff`, signoffData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error adding sign-off:', error);
@@ -119,9 +163,13 @@ export const addSignoff = async (id, signoffData) => {
 };
 
 // Action item conversion
-export const convertActionToTask = async (id, taskData) => {
+export const convertActionToTask = async (id, taskData, token) => {
     try {
-        const response = await api.post(`/meetings/${id}/action-to-task`, taskData);
+        const response = await api.post(`/api/meetings/${id}/action-to-task`, taskData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error converting action to task:', error);
@@ -130,10 +178,14 @@ export const convertActionToTask = async (id, taskData) => {
 };
 
 // Utility functions
-export const getUpcomingMeetings = async (params = {}) => {
+export const getUpcomingMeetings = async (params = {}, token) => {
     try {
         const queryString = new URLSearchParams(params).toString();
-        const response = await api.get(`/meetings/upcoming${queryString ? `?${queryString}` : ''}`);
+        const response = await api.get(`/api/meetings/upcoming${queryString ? `?${queryString}` : ''}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching upcoming meetings:', error);
@@ -141,10 +193,14 @@ export const getUpcomingMeetings = async (params = {}) => {
     }
 };
 
-export const getMeetingCalendar = async (params = {}) => {
+export const getMeetingCalendar = async (params = {}, token) => {
     try {
         const queryString = new URLSearchParams(params).toString();
-        const response = await api.get(`/meetings/calendar${queryString ? `?${queryString}` : ''}`);
+        const response = await api.get(`/api/meetings/calendar${queryString ? `?${queryString}` : ''}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error fetching calendar data:', error);
@@ -258,14 +314,18 @@ export const exportMeetingData = (meeting) => {
 };
 
 // Search meetings
-export const searchMeetings = async (searchText, filters = {}) => {
+export const searchMeetings = async (searchText, filters = {}, token) => {
     try {
         const params = {
             search: searchText,
             ...filters
         };
         const queryString = new URLSearchParams(params).toString();
-        const response = await api.get(`/meetings?${queryString}`);
+        const response = await api.get(`/api/meetings?${queryString}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error searching meetings:', error);
@@ -274,9 +334,9 @@ export const searchMeetings = async (searchText, filters = {}) => {
 };
 
 // Batch operations
-export const bulkUpdateMeetingStatus = async (meetingIds, status) => {
+export const bulkUpdateMeetingStatus = async (meetingIds, status, token) => {
     try {
-        const promises = meetingIds.map(id => updateMeetingStatus(id, status));
+        const promises = meetingIds.map(id => updateMeetingStatus(id, status, token));
         const results = await Promise.all(promises);
         return results;
     } catch (error) {
@@ -285,10 +345,10 @@ export const bulkUpdateMeetingStatus = async (meetingIds, status) => {
     }
 };
 
-export const bulkMarkAttendance = async (meetingId, attendanceData) => {
+export const bulkMarkAttendance = async (meetingId, attendanceData, token) => {
     try {
-        const promises = attendanceData.map(data => 
-            markAttendance(meetingId, data.participantId, data.attended)
+        const promises = attendanceData.map(data =>
+            markAttendance(meetingId, data.participantId, data.attended, token)
         );
         const results = await Promise.all(promises);
         return results;

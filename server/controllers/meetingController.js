@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../configs/prisma.js';
 
 // Generate unique meeting ID
 const generateMeetingId = async () => {
@@ -276,10 +275,10 @@ const createMeeting = async (req, res) => {
                 meetingType: meetingType || 'ONE_TIME',
                 meetingDate: new Date(meetingDate),
                 endDate: endDate ? new Date(endDate) : null,
-                duration,
+                duration: duration ? parseInt(duration) : null,
                 location,
                 meetingLink,
-                recurrencePattern,
+                recurrencePattern: recurrencePattern || null,
                 recurrenceEndDate: recurrenceEndDate ? new Date(recurrenceEndDate) : null,
                 ownerId,
                 distributionList: distributionList || [],

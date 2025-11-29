@@ -154,7 +154,50 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
     };
     
     const exportMatrix = () => {
-        // TODO: Implement matrix export functionality
+        // Create matrix data for export
+        const matrixData = [];
+        
+        // Add header row
+        matrixData.push(['Risk Matrix', ...impactLevels.map(impact =>
+            t(`riskManagement.impact.${impact.toLowerCase().replace('_', '')}`)
+        )]);
+        
+        // Add each likelihood row (reversed to match visual display)
+        [...likelihoodLevels].reverse().forEach((likelihood) => {
+            const row = [t(`riskManagement.likelihood.${likelihood.toLowerCase().replace('_', '')}`)];
+            
+            impactLevels.forEach(impact => {
+                const key = `${likelihood}-${impact}`;
+                const cellRisks = risksByCell[key] || [];
+                const riskLevel = getRiskLevel(likelihood, impact);
+                
+                if (cellRisks.length > 0) {
+                    const riskIds = cellRisks.map(r => r.riskId).join(', ');
+                    row.push(`${riskLevel} (${cellRisks.length}): ${riskIds}`);
+                } else {
+                    row.push(riskLevel);
+                }
+            });
+            
+            matrixData.push(row);
+        });
+        
+        // Convert to CSV
+        const csvContent = matrixData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        
+        // Create and download file
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `risk-matrix-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     };
     
     return (
@@ -241,7 +284,7 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
                                         <div className="w-12 sm:w-16 lg:w-20 h-10 sm:h-12"></div>
                                         {impactLevels.map(impact => (
                                             <div key={impact} className="flex-1 h-10 sm:h-12 flex items-center justify-center text-[9px] sm:text-xs font-medium text-center px-0.5 sm:px-1">
-                                                <span className="hidden sm:inline">{t(`riskManagement.impact.${impact.toLowerCase()}`)}</span>
+                                                <span className="hidden sm:inline">{t(`riskManagement.impact.${impact.toLowerCase().replace('_', '')}`)}</span>
                                                 <span className="sm:hidden">
                                                     {matrixSize === '3x3'
                                                         ? impact.charAt(0)
@@ -256,7 +299,7 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
                                         <div key={likelihood} className="flex">
                                             {/* Row label */}
                                             <div className="w-12 sm:w-16 lg:w-20 h-14 sm:h-16 lg:h-20 flex items-center justify-end pr-1 sm:pr-2 text-[9px] sm:text-xs font-medium">
-                                                <span className="hidden sm:inline text-right">{t(`riskManagement.likelihood.${likelihood.toLowerCase()}`)}</span>
+                                                <span className="hidden sm:inline text-right">{t(`riskManagement.likelihood.${likelihood.toLowerCase().replace('_', '')}`)}</span>
                                                 <span className="sm:hidden">
                                                     {matrixSize === '3x3'
                                                         ? likelihood.charAt(0)
@@ -310,13 +353,13 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
                                                             <TooltipContent>
                                                                 <div className="space-y-1">
                                                                     <p className="font-semibold">
-                                                                        {t('riskManagement.likelihood.label')}: {t(`riskManagement.likelihood.${likelihood.toLowerCase()}`)}
+                                                                        {t('riskManagement.likelihood.label')}: {t(`riskManagement.likelihood.${likelihood.toLowerCase().replace('_', '')}`)}
                                                                     </p>
                                                                     <p className="font-semibold">
-                                                                        {t('riskManagement.impact.label')}: {t(`riskManagement.impact.${impact.toLowerCase()}`)}
+                                                                        {t('riskManagement.impact.label')}: {t(`riskManagement.impact.${impact.toLowerCase().replace('_', '')}`)}
                                                                     </p>
                                                                     <p className="font-semibold">
-                                                                        {t('riskManagement.riskLevel.label')}: {getRiskLevel(likelihood, impact)}
+                                                                        {t('riskManagement.riskLevel.label')}: {t(`riskManagement.riskLevel.${getRiskLevel(likelihood, impact).toLowerCase()}`)}
                                                                     </p>
                                                                     {cellRisks.length > 0 && (
                                                                         <>
