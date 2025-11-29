@@ -1208,9 +1208,7 @@
     "closed": "مغلق",
     "riskId": "معرف المخاطر",
     "category": "الفئة",
-    "riskLevel": "مستوى الخطر",
     "score": "النقاط",
-    "status": "الحالة",
     "owner": "المالك",
     "nextReview": "المراجعة التالية",
     "actions": "الإجراءات",
@@ -1260,7 +1258,10 @@
       "minor": "طفيف",
       "moderate": "معتدل",
       "major": "كبير",
-      "catastrophic": "كارثي"
+      "catastrophic": "كارثي",
+      "low": "منخفض",
+      "medium": "متوسط",
+      "high": "مرتفع"
     },
     "tabs": {
       "overview": "نظرة عامة",
@@ -1281,8 +1282,6 @@
       "estimatedCost": "التكلفة المقدرة",
       "triggers": "المحفزات",
       "indicators": "المؤشرات",
-      "likelihood": "الاحتمالية",
-      "impact": "التأثير",
       "detectability": "القابلية للاكتشاف",
       "velocity": "السرعة",
       "cause": "السبب الجذري",
@@ -1321,9 +1320,6 @@
       "existingControlsPlaceholder": "صف الضوابط الحالية الموجودة",
       "proposedControlsPlaceholder": "صف الضوابط المقترحة",
       "create": "إنشاء المخاطر",
-      "likelihood": "الاحتمالية",
-      "impact": "التأثير",
-      "riskLevel": "مستوى المخاطر",
       "detectability": "القابلية للاكتشاف",
       "detectabilityLow": "منخفضة",
       "detectabilityMedium": "متوسطة",
@@ -1548,6 +1544,7 @@
       "unknown": "غير محدد"
     },
     "status": {
+      "label": "الحالة",
       "identified": "محدد",
       "analyzing": "قيد التحليل",
       "active": "نشط",

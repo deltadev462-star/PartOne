@@ -140,7 +140,7 @@ const RiskAssessment = ({ risks, onUpdateRisk, isDark }) => {
                         {/* Likelihood */}
                         <div>
                             <label className="text-sm font-medium mb-2 block">
-                                {t('riskManagement.likelihood')}
+                                {t('riskManagement.likelihood.label')}
                             </label>
                             <select
                                 value={scores.likelihood}
@@ -158,7 +158,7 @@ const RiskAssessment = ({ risks, onUpdateRisk, isDark }) => {
                         {/* Impact */}
                         <div>
                             <label className="text-sm font-medium mb-2 block">
-                                {t('riskManagement.impact')}
+                                {t('riskManagement.impact.label')}
                             </label>
                             <select
                                 value={scores.impact}
@@ -406,11 +406,11 @@ const RiskAssessment = ({ risks, onUpdateRisk, isDark }) => {
                                         
                                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
                                             <div>
-                                                <p className="text-xs text-gray-500">{t('riskManagement.likelihood')}</p>
+                                                <p className="text-xs text-gray-500">{t('riskManagement.likelihood.label')}</p>
                                                 <p className="font-medium">{risk.likelihood || '-'}</p>
                                             </div>
                                             <div>
-                                                <p className="text-xs text-gray-500">{t('riskManagement.impact')}</p>
+                                                <p className="text-xs text-gray-500">{t('riskManagement.impact.label')}</p>
                                                 <p className="font-medium">{risk.impact || risk.severity || '-'}</p>
                                             </div>
                                             <div>

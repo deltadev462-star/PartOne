@@ -274,7 +274,7 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
                             <div className="relative">
                                 {/* Y-axis label - Hidden on mobile */}
                                 <div className="hidden sm:block absolute -left-16 lg:-left-20 top-1/2 -translate-y-1/2 -rotate-90 text-xs lg:text-sm font-medium whitespace-nowrap">
-                                    {t('riskManagement.likelihood')} →
+                                    {t('riskManagement.likelihood.label')} →
                                 </div>
                                 
                                 {/* Matrix */}
@@ -387,7 +387,7 @@ const RiskMatrix = ({ risks, onSelectRisk, isDark }) => {
                                     {/* X-axis label - Simplified for mobile */}
                                     <div className="flex justify-center mt-2 sm:mt-4">
                                         <span className="text-[10px] sm:text-xs lg:text-sm font-medium">
-                                            {t('riskManagement.impact')} →
+                                            {t('riskManagement.impact.label')} →
                                         </span>
                                     </div>
                                 </div>

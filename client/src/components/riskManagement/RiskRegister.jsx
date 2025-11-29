@@ -286,7 +286,7 @@ const RiskRegister = ({
                                     onClick={() => handleSort('riskLevel')}
                                 >
                                     <div className="flex items-center gap-1">
-                                        {t('riskManagement.riskLevel')}
+                                        {t('riskManagement.riskLevel.label')}
                                         {sortField === 'riskLevel' && (
                                             sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
                                         )}
@@ -303,7 +303,7 @@ const RiskRegister = ({
                                         )}
                                     </div>
                                 </TableHead>
-                                <TableHead>{t('riskManagement.status')}</TableHead>
+                                <TableHead>{t('riskManagement.status.label') || t('riskManagement.status')}</TableHead>
                                 <TableHead>{t('riskManagement.owner')}</TableHead>
                                 <TableHead 
                                     className="cursor-pointer"
@@ -425,7 +425,7 @@ const RiskRegister = ({
                                                 <div className="p-4 space-y-4">
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         <div>
-                                                            <h4 className="font-semibold mb-2">{t('riskManagement.impact')}</h4>
+                                                            <h4 className="font-semibold mb-2">{t('riskManagement.impact.label')}</h4>
                                                             <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                                                 {risk.impactDescription || t('common.noDescription')}
                                                             </p>

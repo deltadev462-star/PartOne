@@ -1260,7 +1260,10 @@
       "minor": "Minor",
       "moderate": "Moderate",
       "major": "Major",
-      "catastrophic": "Catastrophic"
+      "catastrophic": "Catastrophic",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
     },
     "tabs": {
       "overview": "Overview",
