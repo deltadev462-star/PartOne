@@ -113,7 +113,8 @@ const RiskDetailModal = ({
     
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto dark:bg-[#101010] bg-white backdrop-blur-xl
+" >
                 <DialogHeader>
                     <DialogTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -163,9 +164,7 @@ const RiskDetailModal = ({
                                 type="text"
                                 value={editData.title || ''}
                                 onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                                className={`w-full px-3 py-2 border rounded-lg ${
-                                    isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                }`}
+                                className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200  `}
                             />
                         ) : (
                             risk.title
@@ -194,9 +193,7 @@ const RiskDetailModal = ({
                                         <textarea
                                             value={editData.description || ''}
                                             onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                                            className={`w-full px-3 py-2 border rounded-lg ${
-                                                isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                            }`}
+                                            className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                             rows={3}
                                         />
                                     ) : (
@@ -214,9 +211,7 @@ const RiskDetailModal = ({
                                         <select
                                             value={editData.category || ''}
                                             onChange={(e) => setEditData({ ...editData, category: e.target.value })}
-                                            className={`w-full px-3 py-2 border rounded-lg ${
-                                                isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                            }`}
+                                            className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200  }`}
                                         >
                                             {Object.entries(riskCategories).map(([key, category]) => (
                                                 <option key={key} value={key}>{category.name}</option>
@@ -238,9 +233,7 @@ const RiskDetailModal = ({
                                             type="text"
                                             value={editData.owner || ''}
                                             onChange={(e) => setEditData({ ...editData, owner: e.target.value })}
-                                            className={`w-full px-3 py-2 border rounded-lg ${
-                                                isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                            }`}
+                                            className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                         />
                                     ) : (
                                         <p className={`mt-1 flex items-center gap-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -355,9 +348,7 @@ const RiskDetailModal = ({
                                     <select
                                         value={editData.likelihood || ''}
                                         onChange={(e) => setEditData({ ...editData, likelihood: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg ${
-                                            isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                        }`}
+                                        className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                     >
                                         <option value="RARE">{t('riskManagement.likelihood.rare')}</option>
                                         <option value="UNLIKELY">{t('riskManagement.likelihood.unlikely')}</option>
@@ -380,9 +371,7 @@ const RiskDetailModal = ({
                                     <select
                                         value={editData.impact || editData.severity || ''}
                                         onChange={(e) => setEditData({ ...editData, impact: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg ${
-                                            isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                        }`}
+                                        className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                     >
                                         <option value="INSIGNIFICANT">{t('riskManagement.impact.insignificant')}</option>
                                         <option value="MINOR">{t('riskManagement.impact.minor')}</option>
@@ -543,9 +532,7 @@ const RiskDetailModal = ({
                                     <select
                                         value={editData.status || ''}
                                         onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg ${
-                                            isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                        }`}
+                                        className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                     >
                                         <option value="IDENTIFIED">{t('riskManagement.status.identified')}</option>
                                         <option value="ANALYZING">{t('riskManagement.status.analyzing')}</option>
@@ -582,9 +569,7 @@ const RiskDetailModal = ({
                                         type="date"
                                         value={editData.nextReviewDate || ''}
                                         onChange={(e) => setEditData({ ...editData, nextReviewDate: e.target.value })}
-                                        className={`w-full px-3 py-2 border rounded-lg ${
-                                            isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                        }`}
+                                        className={`w-full px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                     />
                                 ) : (
                                     <p className={`mt-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -648,9 +633,7 @@ const RiskDetailModal = ({
                                     value={newComment}
                                     onChange={(e) => setNewComment(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && addComment()}
-                                    className={`flex-1 px-3 py-2 border rounded-lg ${
-                                        isDark ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                                    }`}
+                                    className={`flex-1 px-3 py-2 border rounded-lg  dark:bg-[#101010] bg-white border dark:border-gray-600 border-gary-200 `}
                                     placeholder={t('riskManagement.detail.addComment')}
                                 />
                                 <Button onClick={addComment} size="sm">
