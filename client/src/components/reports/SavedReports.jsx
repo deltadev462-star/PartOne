@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@clerk/clerk-react';
-import { 
+import {
     Save,
     FileText,
     Clock,
@@ -30,6 +30,7 @@ import {
     Settings
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import reportService from '../../services/reportService';
 
 const SavedReports = ({ projectId, isDark }) => {
     const { t } = useTranslation();
@@ -42,6 +43,8 @@ const SavedReports = ({ projectId, isDark }) => {
     const [selectedReport, setSelectedReport] = useState(null);
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState(null);
+    const dropdownTimeoutRef = useRef(null);
 
     // Report categories
     const categories = [
@@ -65,156 +68,27 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/saved?projectId=${projectId}&category=${filterCategory}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setSavedReports(data);
+            // Fetch actual data from API
+            const data = await reportService.getSavedReports(projectId, filterCategory === 'all' ? null : filterCategory, token);
+            const fetchedReports = data.reports || [];
 
-            // Simulated data
-            const mockReports = [
-                {
-                    id: '1',
-                    name: 'Weekly Project Status Report',
-                    description: 'Comprehensive overview of project health, milestones, and team performance',
-                    type: 'standard',
-                    category: 'Project Status',
-                    createdBy: 'John Doe',
-                    createdAt: '2024-11-15T10:00:00Z',
-                    lastModified: '2024-11-28T14:30:00Z',
-                    lastRun: '2024-11-29T08:00:00Z',
-                    nextRun: '2024-12-06T08:00:00Z',
-                    schedule: 'Weekly',
-                    isFavorite: true,
-                    isShared: true,
-                    sharedWith: ['jane.smith@example.com', 'bob.johnson@example.com'],
-                    permissions: 'view',
-                    format: 'PDF',
-                    dataSource: 'projects',
-                    runCount: 12,
-                    avgRunTime: 2.5,
-                    tags: ['weekly', 'status', 'management']
-                },
-                {
-                    id: '2',
-                    name: 'Risk Assessment Dashboard',
-                    description: 'Real-time risk tracking and mitigation status',
-                    type: 'custom',
-                    category: 'Risk Management',
-                    createdBy: 'Jane Smith',
-                    createdAt: '2024-10-20T09:00:00Z',
-                    lastModified: '2024-11-27T16:00:00Z',
-                    lastRun: '2024-11-28T10:00:00Z',
-                    nextRun: null,
-                    schedule: 'On Demand',
-                    isFavorite: true,
-                    isShared: false,
-                    sharedWith: [],
-                    permissions: 'edit',
-                    format: 'Excel',
-                    dataSource: 'risks',
-                    runCount: 25,
-                    avgRunTime: 1.8,
-                    tags: ['risk', 'dashboard', 'critical']
-                },
-                {
-                    id: '3',
-                    name: 'Task Progress Summary',
-                    description: 'Daily task completion rates and team productivity metrics',
-                    type: 'standard',
-                    category: 'Task Management',
-                    createdBy: 'Current User',
-                    createdAt: '2024-11-01T11:00:00Z',
-                    lastModified: '2024-11-29T09:00:00Z',
-                    lastRun: '2024-11-29T07:00:00Z',
-                    nextRun: '2024-11-30T07:00:00Z',
-                    schedule: 'Daily',
-                    isFavorite: false,
-                    isShared: true,
-                    sharedWith: ['team@example.com'],
-                    permissions: 'edit',
-                    format: 'CSV',
-                    dataSource: 'tasks',
-                    runCount: 28,
-                    avgRunTime: 1.2,
-                    tags: ['daily', 'tasks', 'productivity']
-                },
-                {
-                    id: '4',
-                    name: 'Requirements Coverage Matrix',
-                    description: 'Traceability matrix showing requirements vs tasks and tests',
-                    type: 'custom',
-                    category: 'Requirements',
-                    createdBy: 'Bob Johnson',
-                    createdAt: '2024-09-15T13:00:00Z',
-                    lastModified: '2024-11-25T11:00:00Z',
-                    lastRun: '2024-11-26T15:00:00Z',
-                    nextRun: null,
-                    schedule: 'Monthly',
-                    isFavorite: false,
-                    isShared: true,
-                    sharedWith: ['qa-team@example.com', 'dev-team@example.com'],
-                    permissions: 'view',
-                    format: 'PDF',
-                    dataSource: 'requirements',
-                    runCount: 8,
-                    avgRunTime: 3.2,
-                    tags: ['requirements', 'coverage', 'quality']
-                },
-                {
-                    id: '5',
-                    name: 'Stakeholder Communication Log',
-                    description: 'Monthly stakeholder engagement and satisfaction metrics',
-                    type: 'standard',
-                    category: 'Stakeholder Management',
-                    createdBy: 'Current User',
-                    createdAt: '2024-10-10T10:00:00Z',
-                    lastModified: '2024-11-20T14:00:00Z',
-                    lastRun: '2024-11-15T09:00:00Z',
-                    nextRun: '2024-12-15T09:00:00Z',
-                    schedule: 'Monthly',
-                    isFavorite: true,
-                    isShared: false,
-                    sharedWith: [],
-                    permissions: 'edit',
-                    format: 'Excel',
-                    dataSource: 'stakeholders',
-                    runCount: 6,
-                    avgRunTime: 2.0,
-                    tags: ['stakeholder', 'monthly', 'communication']
-                }
-            ];
-
-            // Apply category filter
-            let filteredReports = mockReports;
-            if (filterCategory === 'favorites') {
-                filteredReports = mockReports.filter(r => r.isFavorite);
-            } else if (filterCategory === 'scheduled') {
-                filteredReports = mockReports.filter(r => r.schedule !== 'On Demand');
-            } else if (filterCategory === 'shared') {
-                filteredReports = mockReports.filter(r => r.isShared && r.createdBy !== 'Current User');
-            } else if (filterCategory === 'personal') {
-                filteredReports = mockReports.filter(r => r.createdBy === 'Current User');
-            }
-
-            // Update category counts
-            // Update categories with translations
+            // Update categories with translations and counts
             categories[0].name = t('reports.allReports');
             categories[1].name = t('reports.favorites');
             categories[2].name = t('reports.scheduled');
             categories[3].name = t('reports.sharedWithMe');
             categories[4].name = t('reports.myReports');
             
-            categories[0].count = mockReports.length;
-            categories[1].count = mockReports.filter(r => r.isFavorite).length;
-            categories[2].count = mockReports.filter(r => r.schedule !== 'On Demand').length;
-            categories[3].count = mockReports.filter(r => r.isShared && r.createdBy !== 'Current User').length;
-            categories[4].count = mockReports.filter(r => r.createdBy === 'Current User').length;
+            // If we have reports, update counts based on actual data
+            if (fetchedReports.length > 0) {
+                categories[0].count = fetchedReports.length;
+                categories[1].count = fetchedReports.filter(r => r.isFavorite).length;
+                categories[2].count = fetchedReports.filter(r => r.schedule && r.schedule !== 'On Demand').length;
+                categories[3].count = fetchedReports.filter(r => r.sharedWith && r.sharedWith.length > 0).length;
+                categories[4].count = fetchedReports.filter(r => !r.sharedWith || r.sharedWith.length === 0).length;
+            }
 
-            setSavedReports(filteredReports);
+            setSavedReports(fetchedReports);
         } catch (error) {
             console.error('Error fetching saved reports:', error);
             toast.error(t('reports.fetchError'));
@@ -231,8 +105,10 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
+            // Call actual API
+            await reportService.runReport(report.id, token);
             toast.success(t('reports.runningReport', { name: report.name }));
-            // TODO: Implement actual report execution
+            fetchSavedReports(); // Refresh data after running
         } catch (error) {
             toast.error(t('reports.failedToRunReport'));
         }
@@ -246,7 +122,9 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual API call
+            // Call actual API
+            await reportService.toggleFavorite(reportId, token);
+            
             setSavedReports(prevReports =>
                 prevReports.map(report =>
                     report.id === reportId
@@ -271,7 +149,8 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual API call
+            // Call actual API
+            await reportService.deleteReport(reportId, token);
             setSavedReports(prevReports => prevReports.filter(r => r.id !== reportId));
             toast.success(t('reports.reportDeletedSuccess'));
         } catch (error) {
@@ -287,9 +166,10 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual API call
+            // Call actual API
+            await reportService.duplicateReport(report.id, token);
             toast.success(t('reports.duplicatedReport', { name: report.name }));
-            fetchSavedReports();
+            fetchSavedReports(); // Refresh the list
         } catch (error) {
             toast.error(t('reports.failedToDuplicateReport'));
         }
@@ -303,10 +183,117 @@ const SavedReports = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual export
-            toast.success(`Exported ${report.name} as ${format}`);
+            // Validate required data
+            if (!projectId) {
+                toast.error(t('reports.selectProject') || 'Please select a project');
+                return;
+            }
+
+            // Map report type to expected API format (server expects kebab-case)
+            let reportType = report.type;
+            
+            // First, check for dataSource or reportType fields
+            if (report.dataSource) {
+                reportType = report.dataSource;
+            } else if (report.reportType) {
+                reportType = report.reportType;
+            } else if (report.config?.reportType) {
+                reportType = report.config.reportType;
+            } else if (report.config?.type) {
+                reportType = report.config.type;
+            }
+            
+            // Map common variations to valid server types
+            const typeMapping = {
+                'tasks': 'task-progress',
+                'task': 'task-progress',
+                'taskProgress': 'task-progress',
+                'task-progress': 'task-progress',
+                'projectStatus': 'project-status',
+                'project-status': 'project-status',
+                'status': 'project-status',
+                'overview': 'project-status',
+                'requirements': 'requirements-coverage',
+                'requirement': 'requirements-coverage',
+                'requirementsCoverage': 'requirements-coverage',
+                'requirements-coverage': 'requirements-coverage',
+                'coverage': 'requirements-coverage',
+                'stakeholder': 'stakeholder-engagement',
+                'stakeholders': 'stakeholder-engagement',
+                'stakeholderEngagement': 'stakeholder-engagement',
+                'stakeholder-engagement': 'stakeholder-engagement',
+                'engagement': 'stakeholder-engagement',
+                'dashboard': 'dashboard',
+                'management': 'dashboard',
+                'managementDashboard': 'dashboard',
+                'custom': 'project-status',
+                'standard': 'project-status'
+            };
+            
+            // Check if we have a direct mapping
+            if (typeMapping[reportType]) {
+                reportType = typeMapping[reportType];
+            } else if (!reportType || reportType === 'custom' || reportType === 'standard') {
+                // If type is generic or missing, try to infer from name
+                if (report.name) {
+                    const nameLower = report.name.toLowerCase();
+                    if (nameLower.includes('task') || nameLower.includes('progress')) {
+                        reportType = 'task-progress';
+                    } else if (nameLower.includes('status') || nameLower.includes('overview')) {
+                        reportType = 'project-status';
+                    } else if (nameLower.includes('requirement') || nameLower.includes('coverage')) {
+                        reportType = 'requirements-coverage';
+                    } else if (nameLower.includes('stakeholder') || nameLower.includes('engagement')) {
+                        reportType = 'stakeholder-engagement';
+                    } else if (nameLower.includes('dashboard') || nameLower.includes('management')) {
+                        reportType = 'dashboard';
+                    } else {
+                        reportType = 'project-status'; // Default fallback
+                    }
+                } else {
+                    reportType = 'project-status'; // Default fallback
+                }
+            } else if (!reportType.includes('-')) {
+                // Convert camelCase to kebab-case if not already in kebab-case
+                reportType = reportType
+                    .replace(/([a-z])([A-Z])/g, '$1-$2')
+                    .toLowerCase();
+                    
+                // Check mapping again after conversion
+                if (typeMapping[reportType]) {
+                    reportType = typeMapping[reportType];
+                }
+            }
+            
+            // Final validation - ensure it's one of the valid types
+            const validTypes = ['project-status', 'task-progress', 'requirements-coverage', 'stakeholder-engagement', 'dashboard'];
+            if (!validTypes.includes(reportType)) {
+                console.warn(`Invalid report type '${reportType}', falling back to 'project-status'`);
+                reportType = 'project-status';
+            }
+
+            // Ensure format is lowercase
+            const exportFormat = format?.toLowerCase() || 'pdf';
+            
+            // Get filters from report config if available
+            const filters = report.config?.filters || report.filters || {};
+
+            console.log('Exporting saved report:', {
+                reportId: report.id,
+                reportName: report.name,
+                projectId,
+                reportType,
+                format: exportFormat,
+                filters
+            });
+
+            // Call actual API - the reportService will handle any additional transformations
+            await reportService.exportReport(projectId, reportType, exportFormat, filters, token);
+            toast.success(t('reports.exportSuccess', { name: report.name, format: exportFormat.toUpperCase() }) || `Exported ${report.name} as ${exportFormat.toUpperCase()}`);
         } catch (error) {
-            toast.error('Failed to export report');
+            console.error('Error exporting saved report:', error);
+            const errorMessage = error.message || 'Failed to export report';
+            toast.error(t('reports.exportError') || errorMessage);
         }
     };
 
@@ -330,6 +317,31 @@ const SavedReports = ({ projectId, isDark }) => {
         if (format === 'CSV') return 'blue';
         return 'gray';
     };
+
+    const handleDropdownEnter = (reportId) => {
+        // Clear any existing timeout
+        if (dropdownTimeoutRef.current) {
+            clearTimeout(dropdownTimeoutRef.current);
+            dropdownTimeoutRef.current = null;
+        }
+        setActiveDropdown(reportId);
+    };
+
+    const handleDropdownLeave = (reportId) => {
+        // Add delay before closing dropdown
+        dropdownTimeoutRef.current = setTimeout(() => {
+            setActiveDropdown(prev => prev === reportId ? null : prev);
+        }, 300);
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (dropdownTimeoutRef.current) {
+                clearTimeout(dropdownTimeoutRef.current);
+            }
+        };
+    }, []);
 
     if (loading) {
         return (
@@ -504,12 +516,50 @@ const SavedReports = ({ projectId, isDark }) => {
                                     <Play className="h-3 w-3" />
                                     {t('reports.run')}
                                 </button>
-                                <button
-                                    onClick={() => handleExportReport(report, report.format)}
-                                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
+                                <div
+                                    className="relative"
+                                    onMouseEnter={() => handleDropdownEnter(`grid-${report.id}`)}
+                                    onMouseLeave={() => handleDropdownLeave(`grid-${report.id}`)}
                                 >
-                                    <Download className="h-3 w-3" />
-                                </button>
+                                    <button
+                                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
+                                    >
+                                        <Download className="h-3 w-3" />
+                                    </button>
+                                    <div
+                                        className={`absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 ${
+                                            activeDropdown === `grid-${report.id}` ? 'flex' : 'hidden'
+                                        } gap-1 z-10 bg-gray-800 rounded-lg p-1 shadow-lg`}
+                                    >
+                                        <button
+                                            onClick={() => {
+                                                handleExportReport(report, 'pdf');
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                        >
+                                            PDF
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                handleExportReport(report, 'excel');
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                        >
+                                            Excel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                handleExportReport(report, 'csv');
+                                                setActiveDropdown(null);
+                                            }}
+                                            className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                        >
+                                            CSV
+                                        </button>
+                                    </div>
+                                </div>
                                 <button
                                     onClick={() => setSelectedReport(report)}
                                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 text-xs"
@@ -589,13 +639,51 @@ const SavedReports = ({ projectId, isDark }) => {
                                             >
                                                 <Play className="h-4 w-4" />
                                             </button>
-                                            <button
-                                                onClick={() => handleExportReport(report, report.format)}
-                                                className="text-green-500 hover:text-green-600"
-                                                title={t('reports.export')}
+                                            <div
+                                                className="relative"
+                                                onMouseEnter={() => handleDropdownEnter(`list-${report.id}`)}
+                                                onMouseLeave={() => handleDropdownLeave(`list-${report.id}`)}
                                             >
-                                                <Download className="h-4 w-4" />
-                                            </button>
+                                                <button
+                                                    className="text-green-500 hover:text-green-600"
+                                                    title={t('reports.export')}
+                                                >
+                                                    <Download className="h-4 w-4" />
+                                                </button>
+                                                <div
+                                                    className={`absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 ${
+                                                        activeDropdown === `list-${report.id}` ? 'flex' : 'hidden'
+                                                    } gap-1 z-10 bg-gray-800 rounded-lg p-1 shadow-lg`}
+                                                >
+                                                    <button
+                                                        onClick={() => {
+                                                            handleExportReport(report, 'pdf');
+                                                            setActiveDropdown(null);
+                                                        }}
+                                                        className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                                    >
+                                                        PDF
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            handleExportReport(report, 'excel');
+                                                            setActiveDropdown(null);
+                                                        }}
+                                                        className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                                    >
+                                                        Excel
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            handleExportReport(report, 'csv');
+                                                            setActiveDropdown(null);
+                                                        }}
+                                                        className="px-3 py-2 bg-gray-800 text-white text-xs rounded hover:bg-gray-700 whitespace-nowrap transition-colors"
+                                                    >
+                                                        CSV
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <button
                                                 onClick={() => handleDuplicateReport(report)}
                                                 className="text-purple-500 hover:text-purple-600"

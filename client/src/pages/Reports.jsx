@@ -51,6 +51,8 @@ import CustomReportBuilder from '../components/reports/CustomReportBuilder';
 import SavedReports from '../components/reports/SavedReports';
 import ManagementDashboard from '../components/reports/ManagementDashboard';
 
+import reportService from '../services/reportService';
+
 const Reports = () => {
     const { projectId } = useParams();
     const navigate = useNavigate();
@@ -124,12 +126,41 @@ const Reports = () => {
     }, [projectId]);
 
     useEffect(() => {
-        if (selectedProjectId && activeReport) {
-            fetchReportData();
+        if (selectedProjectId) {
+            fetchStatistics();
+            // Don't automatically fetch report data on mount - wait for user to click Generate Report
+            // if (activeReport) {
+            //     fetchReportData();
+            // }
         }
-    }, [selectedProjectId, activeReport, filters]);
+    }, [selectedProjectId]);
+
+    const fetchStatistics = async () => {
+        try {
+            const token = await getToken();
+            if (!token) {
+                return;
+            }
+            
+            const statistics = await reportService.getReportStatistics(selectedProjectId, token);
+            setStats(statistics);
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+        }
+    };
 
     const fetchReportData = async () => {
+        // Ensure we have required data before fetching
+        if (!selectedProjectId) {
+            toast.error(t('reports.selectProject'));
+            return;
+        }
+        
+        if (!activeReport) {
+            toast.error('Please select a report type');
+            return;
+        }
+        
         setLoading(true);
         try {
             const token = await getToken();
@@ -138,20 +169,39 @@ const Reports = () => {
                 return;
             }
             
-            // TODO: Implement actual API call to fetch report data
-            // const data = await reportService.getReportData(selectedProjectId, activeReport, filters, token);
-            // setReportData(data);
+            // Clear previous data to show loading state
+            setReportData(null);
             
-            // Simulated data for now
-            setReportData({
-                type: activeReport,
-                projectId: selectedProjectId,
-                generatedAt: new Date().toISOString(),
-                data: {}
-            });
+            console.log('Fetching report:', { projectId: selectedProjectId, reportType: activeReport, filters });
+            
+            // Fetch actual report data from API
+            const data = await reportService.getReportData(selectedProjectId, activeReport, filters, token);
+            
+            console.log('Report data received:', data);
+            
+            if (data) {
+                setReportData(data);
+                
+                // Update stats if it's a saved report
+                if (data.stats) {
+                    setStats(data.stats);
+                }
+                
+                toast.success(t('reports.generatedSuccessfully') || 'Report generated successfully');
+            } else {
+                toast.error('No data returned from server');
+            }
         } catch (error) {
             console.error('Error fetching report data:', error);
-            toast.error(t('reports.fetchError'));
+            if (error.response) {
+                console.error('Error response:', error.response.data);
+                toast.error(error.response.data?.error || t('reports.fetchError'));
+            } else if (error.request) {
+                toast.error('No response from server. Please check your connection.');
+            } else {
+                toast.error(t('reports.fetchError'));
+            }
+            setReportData(null);
         } finally {
             setLoading(false);
         }
@@ -163,6 +213,22 @@ const Reports = () => {
     };
 
     const handleExportReport = async (format) => {
+        // Validate that we have the necessary data
+        if (!selectedProjectId) {
+            toast.error(t('reports.selectProject') || 'Please select a project first');
+            return;
+        }
+        
+        if (!activeReport) {
+            toast.error(t('reports.selectReportType') || 'Please select a report type');
+            return;
+        }
+        
+        if (!reportData) {
+            toast.error(t('reports.generateReportFirst') || 'Please generate a report first before exporting');
+            return;
+        }
+        
         try {
             const token = await getToken();
             if (!token) {
@@ -170,18 +236,39 @@ const Reports = () => {
                 return;
             }
             
-            // TODO: Implement actual export functionality
-            toast.success(t('reports.exportSuccess'));
+            console.log('Exporting report:', { projectId: selectedProjectId, reportType: activeReport, format, filters });
+            
+            // Export report using the API
+            await reportService.exportReport(selectedProjectId, activeReport, format, filters, token);
+            toast.success(t('reports.exportSuccess') || 'Report exported successfully');
         } catch (error) {
-            toast.error(t('reports.exportError'));
+            console.error('Error exporting report:', error);
+            
+            // Provide more detailed error message
+            if (error.response?.data?.error) {
+                toast.error(`Export failed: ${error.response.data.error}`);
+            } else if (error.message) {
+                toast.error(`Export failed: ${error.message}`);
+            } else {
+                toast.error(t('reports.exportError') || 'Failed to export report');
+            }
         }
     };
 
     const handleShareReport = async () => {
         try {
-            // TODO: Implement share functionality
+            const token = await getToken();
+            if (!token) {
+                toast.error('Authentication required');
+                return;
+            }
+            
+            // For now, copy the report link to clipboard
+            const reportUrl = `${window.location.origin}/reports/${selectedProjectId}?type=${activeReport}`;
+            await navigator.clipboard.writeText(reportUrl);
             toast.success(t('reports.shareSuccess'));
         } catch (error) {
+            console.error('Error sharing report:', error);
             toast.error(t('reports.shareError'));
         }
     };
@@ -389,13 +476,36 @@ const Reports = () => {
                             <Share2 className="h-4 w-4" />
                             <span className="text-xs sm:text-sm">{t('reports.share')}</span>
                         </button>
-                        <button
-                            onClick={() => handleExportReport('pdf')}
-                            className="flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                            <Download className="h-4 w-4" />
-                            <span className="text-xs sm:text-sm">{t('reports.export')}</span>
-                        </button>
+                        <div className="relative group">
+                            <button
+                                onClick={() => {
+                                    if (!reportData) {
+                                        toast.error(t('reports.generateReportFirst') || 'Please generate a report first');
+                                        return;
+                                    }
+                                    handleExportReport('pdf');
+                                }}
+                                className={`flex items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                                    reportData
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                }`}
+                                disabled={!reportData}
+                            >
+                                <Download className="h-4 w-4" />
+                                <span className="text-xs sm:text-sm">{t('reports.export')}</span>
+                            </button>
+                            {!reportData && (
+                                <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 hidden group-hover:block z-10">
+                                    <div className="bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                                        {t('reports.generateReportFirst') || 'Generate a report first'}
+                                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-px">
+                                            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -407,7 +517,7 @@ const Reports = () => {
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {t('reports.totalReports')}
                                 </p>
-                                <p className="text-xl md:text-2xl font-bold">12</p>
+                                <p className="text-xl md:text-2xl font-bold">{stats.totalReports || 0}</p>
                             </div>
                             <FileText className="h-8 w-8 text-blue-500 opacity-50" />
                         </div>
@@ -419,7 +529,7 @@ const Reports = () => {
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {t('reports.savedReports')}
                                 </p>
-                                <p className="text-xl md:text-2xl font-bold">5</p>
+                                <p className="text-xl md:text-2xl font-bold">{stats.savedReports || 0}</p>
                             </div>
                             <Save className="h-8 w-8 text-green-500 opacity-50" />
                         </div>
@@ -431,7 +541,7 @@ const Reports = () => {
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {t('reports.scheduledReports')}
                                 </p>
-                                <p className="text-xl md:text-2xl font-bold">3</p>
+                                <p className="text-xl md:text-2xl font-bold">{stats.scheduledReports || 0}</p>
                             </div>
                             <Clock className="h-8 w-8 text-purple-500 opacity-50" />
                         </div>
@@ -443,7 +553,11 @@ const Reports = () => {
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                                     {t('reports.lastGenerated')}
                                 </p>
-                                <p className="text-sm font-medium">{t('reports.today')}</p>
+                                <p className="text-sm font-medium">
+                                    {stats.lastGenerated
+                                        ? new Date(stats.lastGenerated).toLocaleDateString()
+                                        : t('reports.never')}
+                                </p>
                             </div>
                             <RefreshCw className="h-8 w-8 text-orange-500 opacity-50" />
                         </div>
@@ -572,14 +686,16 @@ const Reports = () => {
                             {loading ? (
                                 <div className="flex items-center justify-center h-64">
                                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                                    <p className="ml-4">{t('reports.generatingReport') || 'Generating report...'}</p>
                                 </div>
-                            ) : (
+                            ) : reportData ? (
                                 <>
                                     {activeReport === 'projectStatus' && (
                                         <ProjectStatusReport
                                             projectId={selectedProjectId}
                                             filters={filters}
                                             isDark={isDark}
+                                            data={reportData}
                                         />
                                     )}
                                     {activeReport === 'taskProgress' && (
@@ -587,6 +703,7 @@ const Reports = () => {
                                             projectId={selectedProjectId}
                                             filters={filters}
                                             isDark={isDark}
+                                            data={reportData}
                                         />
                                     )}
                                     {activeReport === 'requirementsCoverage' && (
@@ -594,6 +711,7 @@ const Reports = () => {
                                             projectId={selectedProjectId}
                                             filters={filters}
                                             isDark={isDark}
+                                            data={reportData}
                                         />
                                     )}
                                     {activeReport === 'stakeholderEngagement' && (
@@ -601,9 +719,19 @@ const Reports = () => {
                                             projectId={selectedProjectId}
                                             filters={filters}
                                             isDark={isDark}
+                                            data={reportData}
                                         />
                                     )}
                                 </>
+                            ) : (
+                                <div className="p-8 text-center">
+                                    <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                                        {t('reports.noDataAvailable')}
+                                    </p>
+                                    <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                                        {t('reports.clickGenerateToStart') || 'Click "Generate Report" to create your report'}
+                                    </p>
+                                </div>
                             )}
                         </div>
                     </div>

@@ -29,7 +29,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
+import reportService from '../../services/reportService';
+
+const StakeholderEngagementReport = ({ projectId, filters, isDark, data }) => {
     const { t } = useTranslation();
     const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -84,9 +86,26 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
         if (projectId) {
             fetchReportData();
         }
-    }, [projectId, filters]);
+    }, [projectId, filters, data]);
 
     const fetchReportData = async () => {
+        if (data) {
+            // If data is passed from parent, merge it with default structure
+            setReportData(prevData => ({
+                ...prevData,
+                ...data,
+                byCategory: data.byCategory || prevData.byCategory,
+                byInfluence: data.byInfluence || prevData.byInfluence,
+                engagementMatrix: data.engagementMatrix || prevData.engagementMatrix,
+                communications: data.communications || prevData.communications,
+                stakeholderList: data.stakeholderList || prevData.stakeholderList,
+                satisfactionTrends: data.satisfactionTrends || prevData.satisfactionTrends,
+                engagementActivities: data.engagementActivities || prevData.engagementActivities,
+                communicationEffectiveness: data.communicationEffectiveness || prevData.communicationEffectiveness
+            }));
+            return;
+        }
+
         setLoading(true);
         try {
             const token = await getToken();
@@ -95,154 +114,9 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                 return;
             }
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/stakeholder-engagement/${projectId}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setReportData(data);
-
-            // Simulated data
-            setReportData({
-                summary: {
-                    totalStakeholders: 24,
-                    activelyEngaged: 18,
-                    partiallyEngaged: 4,
-                    notEngaged: 2,
-                    engagementRate: 75,
-                    averageSatisfaction: 4.2,
-                    totalCommunications: 156,
-                    upcomingMeetings: 5
-                },
-                byCategory: {
-                    internal: { total: 8, engaged: 7, satisfaction: 4.5 },
-                    external: { total: 6, engaged: 4, satisfaction: 3.8 },
-                    customer: { total: 4, engaged: 3, satisfaction: 4.0 },
-                    partner: { total: 3, engaged: 3, satisfaction: 4.3 },
-                    vendor: { total: 3, engaged: 1, satisfaction: 3.5 }
-                },
-                byInfluence: {
-                    high: { total: 6, engaged: 6, satisfaction: 4.6 },
-                    medium: { total: 10, engaged: 8, satisfaction: 4.0 },
-                    low: { total: 8, engaged: 4, satisfaction: 3.8 }
-                },
-                engagementMatrix: {
-                    highPowerHighInterest: [
-                        { name: 'John Smith', role: 'CEO', engagement: 95, satisfaction: 4.8 },
-                        { name: 'Jane Doe', role: 'Product Owner', engagement: 90, satisfaction: 4.5 },
-                        { name: 'Bob Johnson', role: 'Tech Lead', engagement: 85, satisfaction: 4.3 }
-                    ],
-                    highPowerLowInterest: [
-                        { name: 'Alice Brown', role: 'Finance Director', engagement: 60, satisfaction: 3.8 },
-                        { name: 'Charlie Wilson', role: 'Legal Counsel', engagement: 55, satisfaction: 3.5 }
-                    ],
-                    lowPowerHighInterest: [
-                        { name: 'David Lee', role: 'Developer', engagement: 80, satisfaction: 4.2 },
-                        { name: 'Emma Davis', role: 'QA Lead', engagement: 75, satisfaction: 4.0 }
-                    ],
-                    lowPowerLowInterest: [
-                        { name: 'Frank Miller', role: 'Vendor Rep', engagement: 40, satisfaction: 3.2 },
-                        { name: 'Grace Taylor', role: 'External Auditor', engagement: 35, satisfaction: 3.0 }
-                    ]
-                },
-                communications: {
-                    meetings: [
-                        { date: '2024-11-25', type: 'Steering Committee', attendees: 8, satisfaction: 4.5 },
-                        { date: '2024-11-20', type: 'Sprint Review', attendees: 12, satisfaction: 4.2 },
-                        { date: '2024-11-15', type: 'Stakeholder Workshop', attendees: 15, satisfaction: 4.0 }
-                    ],
-                    emails: [
-                        { date: '2024-11-28', subject: 'Weekly Status Update', recipients: 24, opened: 20 },
-                        { date: '2024-11-21', subject: 'Risk Assessment Report', recipients: 10, opened: 9 },
-                        { date: '2024-11-14', subject: 'Project Milestone Update', recipients: 24, opened: 22 }
-                    ],
-                    reports: [
-                        { date: '2024-11-30', type: 'Monthly Progress', distributed: 15, feedback: 8 },
-                        { date: '2024-10-31', type: 'Monthly Progress', distributed: 15, feedback: 6 }
-                    ],
-                    reviews: [
-                        { date: '2024-11-22', type: 'Phase Review', participants: 10, approval: true },
-                        { date: '2024-10-25', type: 'Design Review', participants: 8, approval: true }
-                    ]
-                },
-                stakeholderList: [
-                    { 
-                        name: 'John Smith', 
-                        role: 'CEO', 
-                        category: 'Internal',
-                        influence: 'High',
-                        interest: 'High',
-                        engagement: 95,
-                        satisfaction: 4.8,
-                        lastContact: '2024-11-28',
-                        preferredChannel: 'Meeting'
-                    },
-                    { 
-                        name: 'Jane Doe', 
-                        role: 'Product Owner', 
-                        category: 'Internal',
-                        influence: 'High',
-                        interest: 'High',
-                        engagement: 90,
-                        satisfaction: 4.5,
-                        lastContact: '2024-11-27',
-                        preferredChannel: 'Email'
-                    },
-                    { 
-                        name: 'Bob Johnson', 
-                        role: 'Tech Lead', 
-                        category: 'Internal',
-                        influence: 'High',
-                        interest: 'High',
-                        engagement: 85,
-                        satisfaction: 4.3,
-                        lastContact: '2024-11-28',
-                        preferredChannel: 'Slack'
-                    },
-                    { 
-                        name: 'Alice Brown', 
-                        role: 'Finance Director', 
-                        category: 'Internal',
-                        influence: 'High',
-                        interest: 'Low',
-                        engagement: 60,
-                        satisfaction: 3.8,
-                        lastContact: '2024-11-20',
-                        preferredChannel: 'Report'
-                    },
-                    { 
-                        name: 'Customer Rep', 
-                        role: 'Key Customer', 
-                        category: 'Customer',
-                        influence: 'Medium',
-                        interest: 'High',
-                        engagement: 75,
-                        satisfaction: 4.0,
-                        lastContact: '2024-11-25',
-                        preferredChannel: 'Phone'
-                    }
-                ],
-                satisfactionTrends: [
-                    { month: 'Sep 2024', satisfaction: 3.8, responseRate: 65 },
-                    { month: 'Oct 2024', satisfaction: 4.0, responseRate: 70 },
-                    { month: 'Nov 2024', satisfaction: 4.2, responseRate: 75 }
-                ],
-                engagementActivities: [
-                    { date: '2024-11-28', activity: 'Weekly Status Meeting', participants: 12, type: 'Meeting' },
-                    { date: '2024-11-27', activity: 'Project Newsletter', recipients: 24, type: 'Email' },
-                    { date: '2024-11-25', activity: 'Stakeholder Workshop', participants: 15, type: 'Workshop' },
-                    { date: '2024-11-22', activity: 'Phase Review', participants: 10, type: 'Review' },
-                    { date: '2024-11-20', activity: 'Sprint Demo', participants: 18, type: 'Demo' }
-                ],
-                communicationEffectiveness: {
-                    responseRate: 83,
-                    averageResponseTime: 2.5,
-                    feedbackScore: 4.1,
-                    actionItemsCompleted: 78
-                }
-            });
+            // Fetch actual data from API
+            const reportData = await reportService.getStakeholderEngagementReport(projectId, filters, token);
+            setReportData(reportData);
         } catch (error) {
             console.error('Error fetching stakeholder engagement report:', error);
             toast.error(t('reports.fetchError'));
@@ -404,7 +278,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                     <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
                         <h3 className="text-lg font-semibold mb-4">{t('reports.engagementByCategory')}</h3>
                         <div className="space-y-4">
-                            {Object.entries(byCategory).map(([category, data]) => (
+                            {byCategory && Object.entries(byCategory).map(([category, data]) => (
                                 <div key={category}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="font-medium capitalize">{category}</span>
@@ -476,51 +350,59 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stakeholderList.map((stakeholder, index) => (
-                                    <tr key={index} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                                        <td className="py-3">{stakeholder.name}</td>
-                                        <td className="py-3">{stakeholder.role}</td>
-                                        <td className="text-center py-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                stakeholder.influence === 'High' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                                                stakeholder.influence === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                                'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                            }`}>
-                                                {stakeholder.influence}
-                                            </span>
-                                        </td>
-                                        <td className="text-center py-3">
-                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                stakeholder.interest === 'High' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                stakeholder.interest === 'Medium' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
-                                            }`}>
-                                                {stakeholder.interest}
-                                            </span>
-                                        </td>
-                                        <td className="text-center py-3">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <span className={`text-${getEngagementColor(stakeholder.engagement)}-500`}>
-                                                    {stakeholder.engagement}%
+                                {stakeholderList && stakeholderList.length > 0 ? (
+                                    stakeholderList.map((stakeholder, index) => (
+                                        <tr key={index} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                                            <td className="py-3">{stakeholder.name}</td>
+                                            <td className="py-3">{stakeholder.role}</td>
+                                            <td className="text-center py-3">
+                                                <span className={`px-2 py-1 rounded text-xs ${
+                                                    stakeholder.influence === 'High' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                                                    stakeholder.influence === 'Medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                                }`}>
+                                                    {stakeholder.influence}
                                                 </span>
-                                                <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                    <div 
-                                                        className={`bg-${getEngagementColor(stakeholder.engagement)}-500 h-2 rounded-full`}
-                                                        style={{ width: `${stakeholder.engagement}%` }}
-                                                    />
+                                            </td>
+                                            <td className="text-center py-3">
+                                                <span className={`px-2 py-1 rounded text-xs ${
+                                                    stakeholder.interest === 'High' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    stakeholder.interest === 'Medium' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+                                                }`}>
+                                                    {stakeholder.interest}
+                                                </span>
+                                            </td>
+                                            <td className="text-center py-3">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <span className={`text-${getEngagementColor(stakeholder.engagement)}-500`}>
+                                                        {stakeholder.engagement}%
+                                                    </span>
+                                                    <div className="w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                        <div
+                                                            className={`bg-${getEngagementColor(stakeholder.engagement)}-500 h-2 rounded-full`}
+                                                            style={{ width: `${stakeholder.engagement}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td className="text-center py-3">
-                                            <span className={`text-${getSatisfactionColor(stakeholder.satisfaction)}-500`}>
-                                                {stakeholder.satisfaction}/5
-                                            </span>
-                                        </td>
-                                        <td className="text-center py-3 text-sm">
-                                            {stakeholder.lastContact}
+                                            </td>
+                                            <td className="text-center py-3">
+                                                <span className={`text-${getSatisfactionColor(stakeholder.satisfaction)}-500`}>
+                                                    {stakeholder.satisfaction}/5
+                                                </span>
+                                            </td>
+                                            <td className="text-center py-3 text-sm">
+                                                {stakeholder.lastContact}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-4 text-gray-500">
+                                            {t('reports.noStakeholderData')}
                                         </td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -533,7 +415,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                     <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
                         <h3 className="text-lg font-semibold mb-4">{t('reports.recentCommunications')}</h3>
                         <div className="space-y-3">
-                            {engagementActivities.map((activity, index) => (
+                            {engagementActivities && engagementActivities.length > 0 && engagementActivities.map((activity, index) => (
                                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
                                     <div className="flex items-center gap-3">
                                         {activity.type === 'Meeting' && <Calendar className="h-5 w-5 text-blue-500" />}
@@ -559,7 +441,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <h4 className="font-medium mb-2">{t('reports.meetings')}</h4>
-                                {communications.meetings.map((meeting, index) => (
+                                {communications.meetings && communications.meetings.length > 0 && communications.meetings.map((meeting, index) => (
                                     <div key={index} className="mb-2 text-sm">
                                         <p>{meeting.type} - {meeting.date}</p>
                                         <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -570,7 +452,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                             </div>
                             <div>
                                 <h4 className="font-medium mb-2">{t('reports.emails')}</h4>
-                                {communications.emails.map((email, index) => (
+                                {communications.emails && communications.emails.length > 0 && communications.emails.map((email, index) => (
                                     <div key={index} className="mb-2 text-sm">
                                         <p>{email.subject} - {email.date}</p>
                                         <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -595,7 +477,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                         <div className={`p-4 rounded-lg ${isDark ? 'bg-red-900/20' : 'bg-red-50'} border-2 border-red-500`}>
                             <h4 className="font-medium mb-2 text-red-600 dark:text-red-400">{t('reports.manageClosely')}</h4>
                             <p className="text-xs mb-3">{t('reports.highPowerHighInterest')}</p>
-                            {engagementMatrix.highPowerHighInterest.map((stakeholder, index) => (
+                            {engagementMatrix.highPowerHighInterest && engagementMatrix.highPowerHighInterest.length > 0 && engagementMatrix.highPowerHighInterest.map((stakeholder, index) => (
                                 <div key={index} className="mb-2">
                                     <p className="font-medium">{stakeholder.name}</p>
                                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -609,7 +491,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                         <div className={`p-4 rounded-lg ${isDark ? 'bg-orange-900/20' : 'bg-orange-50'} border-2 border-orange-500`}>
                             <h4 className="font-medium mb-2 text-orange-600 dark:text-orange-400">{t('reports.keepSatisfied')}</h4>
                             <p className="text-xs mb-3">{t('reports.highPowerLowInterest')}</p>
-                            {engagementMatrix.highPowerLowInterest.map((stakeholder, index) => (
+                            {engagementMatrix.highPowerLowInterest && engagementMatrix.highPowerLowInterest.length > 0 && engagementMatrix.highPowerLowInterest.map((stakeholder, index) => (
                                 <div key={index} className="mb-2">
                                     <p className="font-medium">{stakeholder.name}</p>
                                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -623,7 +505,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                         <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/20' : 'bg-blue-50'} border-2 border-blue-500`}>
                             <h4 className="font-medium mb-2 text-blue-600 dark:text-blue-400">{t('reports.keepInformed')}</h4>
                             <p className="text-xs mb-3">{t('reports.lowPowerHighInterest')}</p>
-                            {engagementMatrix.lowPowerHighInterest.map((stakeholder, index) => (
+                            {engagementMatrix.lowPowerHighInterest && engagementMatrix.lowPowerHighInterest.length > 0 && engagementMatrix.lowPowerHighInterest.map((stakeholder, index) => (
                                 <div key={index} className="mb-2">
                                     <p className="font-medium">{stakeholder.name}</p>
                                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -637,7 +519,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                         <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'} border-2 border-gray-400`}>
                             <h4 className="font-medium mb-2 text-gray-600 dark:text-gray-400">{t('reports.monitor')}</h4>
                             <p className="text-xs mb-3">{t('reports.lowPowerLowInterest')}</p>
-                            {engagementMatrix.lowPowerLowInterest.map((stakeholder, index) => (
+                            {engagementMatrix.lowPowerLowInterest && engagementMatrix.lowPowerLowInterest.length > 0 && engagementMatrix.lowPowerLowInterest.map((stakeholder, index) => (
                                 <div key={index} className="mb-2">
                                     <p className="font-medium">{stakeholder.name}</p>
                                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -656,7 +538,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                     <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
                         <h3 className="text-lg font-semibold mb-4">{t('reports.satisfactionTrends')}</h3>
                         <div className="space-y-3">
-                            {satisfactionTrends.map((trend, index) => (
+                            {satisfactionTrends && satisfactionTrends.length > 0 && satisfactionTrends.map((trend, index) => (
                                 <div key={index} className="flex items-center justify-between">
                                     <span className="font-medium">{trend.month}</span>
                                     <div className="flex items-center gap-4">
@@ -677,7 +559,7 @@ const StakeholderEngagementReport = ({ projectId, filters, isDark }) => {
                     <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
                         <h3 className="text-lg font-semibold mb-4">{t('reports.satisfactionByInfluence')}</h3>
                         <div className="space-y-4">
-                            {Object.entries(byInfluence).map(([influence, data]) => (
+                            {byInfluence && Object.entries(byInfluence).map(([influence, data]) => (
                                 <div key={influence}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="font-medium capitalize">{influence} Influence</span>

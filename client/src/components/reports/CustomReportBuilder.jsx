@@ -36,6 +36,7 @@ import {
     Move
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import reportService from '../../services/reportService';
 
 const CustomReportBuilder = ({ projectId, isDark }) => {
     const { t } = useTranslation();
@@ -169,42 +170,9 @@ const CustomReportBuilder = ({ projectId, isDark }) => {
             const token = await getToken();
             if (!token) return;
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/saved`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setSavedReports(data);
-
-            // Simulated saved reports
-            setSavedReports([
-                {
-                    id: 1,
-                    name: 'Weekly Task Summary',
-                    description: 'Tasks grouped by status and assignee',
-                    dataSource: 'tasks',
-                    createdAt: '2024-11-25',
-                    lastRun: '2024-11-29'
-                },
-                {
-                    id: 2,
-                    name: 'Risk Dashboard',
-                    description: 'High priority risks by category',
-                    dataSource: 'risks',
-                    createdAt: '2024-11-20',
-                    lastRun: '2024-11-28'
-                },
-                {
-                    id: 3,
-                    name: 'Requirements Coverage',
-                    description: 'Requirements with test coverage metrics',
-                    dataSource: 'requirements',
-                    createdAt: '2024-11-15',
-                    lastRun: '2024-11-27'
-                }
-            ]);
+            // Fetch actual saved reports from API
+            const data = await reportService.getSavedReports(projectId, 'personal', token);
+            setSavedReports(data.reports || []);
         } catch (error) {
             console.error('Error fetching saved reports:', error);
         }
@@ -316,33 +284,43 @@ const CustomReportBuilder = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual save functionality
-            // const response = await fetch('/api/reports/save', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         Authorization: `Bearer ${token}`
-            //     },
-            //     body: JSON.stringify({
-            //         name: reportName,
-            //         description: reportDescription,
-            //         config: reportConfig,
-            //         projectId
-            //     })
-            // });
+            // Save report using the API service
+            await reportService.saveReport({
+                name: reportName,
+                description: reportDescription,
+                config: reportConfig,
+                projectId,
+                type: 'custom',
+                dataSource: reportConfig.dataSource
+            }, token);
 
             toast.success(t('reports.saveSuccess'));
             fetchSavedReports();
+            
+            // Reset form after successful save
+            setReportName('');
+            setReportDescription('');
         } catch (error) {
+            console.error('Error saving report:', error);
             toast.error(t('reports.saveError'));
         }
     };
 
-    const handleLoadReport = (report) => {
-        setReportName(report.name);
-        setReportDescription(report.description);
-        // TODO: Load report configuration
-        toast.success(t('reports.loadedReport', { name: report.name }));
+    const handleLoadReport = async (report) => {
+        try {
+            setReportName(report.name);
+            setReportDescription(report.description);
+            
+            // Load report configuration if available
+            if (report.config) {
+                setReportConfig(report.config);
+            }
+            
+            toast.success(t('reports.loadedReport', { name: report.name }));
+        } catch (error) {
+            console.error('Error loading report:', error);
+            toast.error(t('reports.failedToLoadReport'));
+        }
     };
 
     const handleExportReport = async (format) => {
@@ -353,9 +331,18 @@ const CustomReportBuilder = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual export functionality
+            // Export report using the API service
+            await reportService.exportReport(
+                projectId,
+                'custom',
+                format,
+                { config: reportConfig },
+                token
+            );
+            
             toast.success(`Report exported as ${format.toUpperCase()}`);
         } catch (error) {
+            console.error('Error exporting report:', error);
             toast.error('Failed to export report');
         }
     };
@@ -744,12 +731,37 @@ const CustomReportBuilder = ({ projectId, isDark }) => {
                                         <Edit className="h-4 w-4" />
                                     </button>
                                     <button
+                                        onClick={async () => {
+                                            try {
+                                                const token = await getToken();
+                                                if (token) {
+                                                    await reportService.runReport(report.id, token);
+                                                    toast.success(t('reports.reportRunning', { name: report.name }));
+                                                }
+                                            } catch (error) {
+                                                toast.error(t('reports.failedToRunReport'));
+                                            }
+                                        }}
                                         className="text-green-500 hover:text-green-600"
                                         title="Run Report"
                                     >
                                         <RefreshCw className="h-4 w-4" />
                                     </button>
                                     <button
+                                        onClick={async () => {
+                                            if (window.confirm(t('reports.confirmDeleteReport'))) {
+                                                try {
+                                                    const token = await getToken();
+                                                    if (token) {
+                                                        await reportService.deleteReport(report.id, token);
+                                                        toast.success(t('reports.reportDeleted'));
+                                                        fetchSavedReports();
+                                                    }
+                                                } catch (error) {
+                                                    toast.error(t('reports.failedToDeleteReport'));
+                                                }
+                                            }
+                                        }}
                                         className="text-red-500 hover:text-red-600"
                                         title="Delete Report"
                                     >
@@ -758,8 +770,8 @@ const CustomReportBuilder = ({ projectId, isDark }) => {
                                 </div>
                             </div>
                             <div className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                                <p>Created: {report.createdAt}</p>
-                                <p>Last Run: {report.lastRun}</p>
+                                <p>Created: {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'N/A'}</p>
+                                <p>Last Run: {report.lastRun ? new Date(report.lastRun).toLocaleDateString() : 'Never'}</p>
                             </div>
                         </div>
                     ))}

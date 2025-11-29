@@ -1741,6 +1741,10 @@
     "configureReportFirst": "Please configure the report first",
     "chartPreviewNotAvailable": "Chart preview not available",
     "searchReports": "Search reports...",
+    "never": "Never",
+    "noMilestonesAvailable": "No milestones available",
+    "noRisksIdentified": "No risks identified",
+    "noTeamData": "No team data",
     "noReportsFound": "No reports found",
     "tryAdjustingSearch": "Try adjusting your search",
     "createYourFirstReport": "Create your first report",
@@ -1872,7 +1876,13 @@
     "attendees": "attendees",
     "opened": "opened",
     "confirmDeleteReport": "Are you sure you want to delete this report?",
-    "confirmDeleteWidget": "Are you sure you want to remove this widget?"
+    "confirmDeleteWidget": "Are you sure you want to remove this widget?",
+    "noDataAvailable": "No data available",
+    "generateReportFirst": "Generate a report first",
+    "clickGenerateToStart": "Click 'Generate Report' to start",
+    "generatingReport": "Generating report...",
+    "generatedSuccessfully": "Report generated successfully",
+    "loadedReport": "Report loaded"
   },
   "meetings": {
     "title": "Meetings",

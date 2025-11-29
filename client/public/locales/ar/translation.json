@@ -1735,6 +1735,10 @@
     "configureReportFirst": "يرجى تكوين التقرير أولاً",
     "chartPreviewNotAvailable": "معاينة الرسم البياني غير متاحة",
     "searchReports": "البحث عن التقارير...",
+    "never": "أبداً",
+    "noMilestonesAvailable": "لا توجد معالم متاحة",
+    "noRisksIdentified": "لم يتم تحديد أي مخاطر",
+    "noTeamData": "لا توجد بيانات الفريق",
     "noReportsFound": "لم يتم العثور على تقارير",
     "tryAdjustingSearch": "حاول تعديل البحث",
     "createYourFirstReport": "أنشئ تقريرك الأول",
@@ -1866,7 +1870,13 @@
     "attendees": "الحضور",
     "opened": "مفتوح",
     "confirmDeleteReport": "هل أنت متأكد من رغبتك في حذف هذا التقرير؟",
-    "confirmDeleteWidget": "هل أنت متأكد من رغبتك في إزالة هذه الأداة؟"
+    "confirmDeleteWidget": "هل أنت متأكد من رغبتك في إزالة هذه الأداة؟",
+    "noDataAvailable": "لا توجد بيانات متاحة",
+    "generateReportFirst": "قم بإنشاء تقرير أولاً",
+    "clickGenerateToStart": "انقر على 'إنشاء التقرير' للبدء",
+    "generatingReport": "جاري إنشاء التقرير...",
+    "generatedSuccessfully": "تم إنشاء التقرير بنجاح",
+    "loadedReport": "تم تحميل التقرير"
   },
   "meetings": {
     "title": "الاجتماعات",

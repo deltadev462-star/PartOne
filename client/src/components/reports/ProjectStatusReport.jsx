@@ -21,11 +21,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const ProjectStatusReport = ({ projectId, filters, isDark }) => {
+const ProjectStatusReport = ({ projectId, filters, isDark, data }) => {
     const { t } = useTranslation();
     const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
-    const [reportData, setReportData] = useState({
+    
+    // Set default values for all nested objects
+    const defaultReportData = {
         project: null,
         overview: {
             status: '',
@@ -82,123 +84,21 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
             satisfaction: 0,
             communicationLog: []
         }
-    });
-
-    useEffect(() => {
-        if (projectId) {
-            fetchReportData();
-        }
-    }, [projectId, filters]);
-
-    const fetchReportData = async () => {
-        setLoading(true);
-        try {
-            const token = await getToken();
-            if (!token) {
-                toast.error('Authentication required');
-                return;
-            }
-
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/project-status/${projectId}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setReportData(data);
-
-            // Simulated data
-            setReportData({
-                project: {
-                    name: 'Sample Project',
-                    description: 'This is a sample project for demonstration',
-                    status: 'ACTIVE',
-                    priority: 'HIGH'
-                },
-                overview: {
-                    status: 'ON_TRACK',
-                    health: 'yellow',
-                    progress: 65,
-                    startDate: '2024-01-01',
-                    endDate: '2024-12-31',
-                    duration: 365,
-                    budget: 100000,
-                    spent: 65000,
-                    remaining: 35000
-                },
-                scope: {
-                    totalRequirements: 45,
-                    completedRequirements: 25,
-                    inProgressRequirements: 12,
-                    pendingRequirements: 8,
-                    scopeChanges: 3,
-                    lastChange: '2024-11-15'
-                },
-                schedule: {
-                    totalTasks: 120,
-                    completedTasks: 78,
-                    overdueTasks: 5,
-                    upcomingTasks: 37,
-                    milestones: [
-                        { name: 'Phase 1 Complete', date: '2024-03-31', status: 'completed' },
-                        { name: 'Phase 2 Complete', date: '2024-06-30', status: 'completed' },
-                        { name: 'Phase 3 Complete', date: '2024-09-30', status: 'in_progress' },
-                        { name: 'Project Complete', date: '2024-12-31', status: 'pending' }
-                    ],
-                    scheduleVariance: -5
-                },
-                risks: {
-                    totalRisks: 15,
-                    activeRisks: 8,
-                    mitigatedRisks: 5,
-                    criticalRisks: 2,
-                    riskScore: 6.5,
-                    topRisks: [
-                        { name: 'Resource Availability', level: 'HIGH', impact: 8 },
-                        { name: 'Technical Dependencies', level: 'MEDIUM', impact: 6 },
-                        { name: 'Budget Constraints', level: 'MEDIUM', impact: 5 }
-                    ]
-                },
-                issues: {
-                    totalIssues: 23,
-                    openIssues: 8,
-                    resolvedIssues: 15,
-                    criticalIssues: 2,
-                    topIssues: [
-                        { name: 'API Integration Delay', severity: 'HIGH', age: 5 },
-                        { name: 'Testing Environment Setup', severity: 'MEDIUM', age: 3 },
-                        { name: 'Documentation Updates', severity: 'LOW', age: 10 }
-                    ]
-                },
-                team: {
-                    totalMembers: 12,
-                    activeMembers: 10,
-                    workload: [
-                        { member: 'John Doe', tasks: 15, capacity: 120 },
-                        { member: 'Jane Smith', tasks: 12, capacity: 100 },
-                        { member: 'Bob Johnson', tasks: 18, capacity: 140 }
-                    ],
-                    productivity: 85
-                },
-                stakeholders: {
-                    total: 8,
-                    engaged: 6,
-                    satisfaction: 75,
-                    communicationLog: [
-                        { date: '2024-11-20', type: 'Meeting', participants: 5 },
-                        { date: '2024-11-15', type: 'Report', participants: 8 },
-                        { date: '2024-11-10', type: 'Review', participants: 6 }
-                    ]
-                }
-            });
-        } catch (error) {
-            console.error('Error fetching project status report:', error);
-            toast.error(t('reports.fetchError'));
-        } finally {
-            setLoading(false);
-        }
     };
+    
+    // Use data passed from parent or set default values
+    const reportData = data || defaultReportData;
+    
+    // Ensure all nested objects exist
+    const {
+        overview = defaultReportData.overview,
+        scope = defaultReportData.scope,
+        schedule = defaultReportData.schedule,
+        risks = defaultReportData.risks,
+        issues = defaultReportData.issues,
+        team = defaultReportData.team,
+        stakeholders = defaultReportData.stakeholders
+    } = reportData;
 
     const getHealthColor = (health) => {
         switch (health) {
@@ -215,15 +115,13 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
         return { color: 'red', icon: AlertTriangle };
     };
 
-    if (loading) {
+    if (loading || !data) {
         return (
             <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
         );
     }
-
-    const { overview, scope, schedule, risks, issues, team, stakeholders } = reportData;
 
     return (
         <div className="p-6">
@@ -269,7 +167,7 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                             {t('reports.budgetUtilization')}
                         </p>
                         <p className="text-xl font-bold">
-                            {overview.budget > 0 ? Math.round((overview.spent / overview.budget) * 100) : 0}%
+                            {overview?.budget > 0 ? Math.round((overview.spent / overview.budget) * 100) : 0}%
                         </p>
                     </div>
                 </div>
@@ -282,7 +180,9 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                     <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{t('reports.scope')}</h4>
                         {(() => {
-                            const completion = (scope.completedRequirements / scope.totalRequirements) * 100;
+                            const completion = scope.totalRequirements > 0
+                                ? (scope.completedRequirements / scope.totalRequirements) * 100
+                                : 0;
                             const status = getRAGStatus(completion);
                             const Icon = status.icon;
                             return <Icon className={`h-5 w-5 text-${status.color}-500`} />;
@@ -299,7 +199,9 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                     <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium">{t('reports.schedule')}</h4>
                         {(() => {
-                            const onTime = ((schedule.totalTasks - schedule.overdueTasks) / schedule.totalTasks) * 100;
+                            const onTime = schedule.totalTasks > 0
+                                ? ((schedule.totalTasks - schedule.overdueTasks) / schedule.totalTasks) * 100
+                                : 100;
                             const status = getRAGStatus(onTime, { green: 95, yellow: 90 });
                             const Icon = status.icon;
                             return <Icon className={`h-5 w-5 text-${status.color}-500`} />;
@@ -361,7 +263,7 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                         {t('reports.milestones')}
                     </h3>
                     <div className="space-y-3">
-                        {schedule.milestones.map((milestone, index) => (
+                        {schedule.milestones && schedule.milestones.length > 0 ? schedule.milestones.map((milestone, index) => (
                             <div key={index} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-3 h-3 rounded-full ${
@@ -375,7 +277,11 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                                     {milestone.date}
                                 </span>
                             </div>
-                        ))}
+                        )) : (
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {t('reports.noMilestonesAvailable')}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -386,7 +292,7 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                         {t('reports.topRisks')}
                     </h3>
                     <div className="space-y-3">
-                        {risks.topRisks.map((risk, index) => (
+                        {risks.topRisks && risks.topRisks.length > 0 ? risks.topRisks.map((risk, index) => (
                             <div key={index} className="flex items-center justify-between">
                                 <span>{risk.name}</span>
                                 <span className={`px-2 py-1 rounded text-xs ${
@@ -397,7 +303,11 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                                     {risk.level}
                                 </span>
                             </div>
-                        ))}
+                        )) : (
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {t('reports.noRisksIdentified')}
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -420,12 +330,16 @@ const ProjectStatusReport = ({ projectId, filters, isDark }) => {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        {team.workload.map((member, index) => (
+                        {team.workload && team.workload.length > 0 ? team.workload.map((member, index) => (
                             <div key={index} className="flex items-center justify-between text-sm">
                                 <span>{member.member}</span>
                                 <span>{member.tasks} tasks ({Math.round((member.tasks / member.capacity) * 100)}% capacity)</span>
                             </div>
-                        ))}
+                        )) : (
+                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {t('reports.noTeamData')}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

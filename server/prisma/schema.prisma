@@ -161,6 +161,7 @@ model Project {
     meetings     Meeting[]
     rfcs         RFC[]
     risks        Risk[]
+    reports      Report[]
 }
 
 model ProjectMember {
@@ -961,4 +962,32 @@ model RiskTaskLink {
     task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
     
     @@unique([riskId, taskId])
+}
+
+// Report model
+model Report {
+    id               String   @id @default(uuid())
+    projectId        String
+    name             String
+    description      String?
+    type             String   @default("custom") // custom, standard, dashboard
+    dataSource       String?  // Which data to include
+    config           Json     @default("{}") // Report configuration
+    createdBy        String
+    lastModified     DateTime @updatedAt
+    lastRun          DateTime?
+    runCount         Int      @default(0)
+    isFavorite       Boolean  @default(false)
+    sharedWith       Json     @default("[]") // Array of user IDs
+    permissions      String   @default("view") // view, edit, admin
+    format           String   @default("PDF") // PDF, Excel, CSV
+    schedule         Json?    // Schedule configuration for automated reports
+    
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt
+    
+    project          Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    
+    @@index([createdBy])
+    @@index([projectId])
 }

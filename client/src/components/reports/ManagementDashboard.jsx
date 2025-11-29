@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@clerk/clerk-react';
-import { 
+import {
     Layout,
     BarChart3,
     PieChart,
@@ -37,6 +37,7 @@ import {
     Briefcase
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import reportService from '../../services/reportService';
 
 const ManagementDashboard = ({ projectId, isDark }) => {
     const { t } = useTranslation();
@@ -45,6 +46,8 @@ const ManagementDashboard = ({ projectId, isDark }) => {
     const [editMode, setEditMode] = useState(false);
     const [selectedWidgets, setSelectedWidgets] = useState([]);
     const [dashboardData, setDashboardData] = useState(null);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+    const exportMenuTimeoutRef = useRef(null);
 
     // Available widgets for the dashboard
     const availableWidgets = [
@@ -91,114 +94,93 @@ const ManagementDashboard = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/dashboard/${projectId}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setDashboardData(data);
-
-            // Simulated dashboard data
-            setDashboardData({
-                projectHealth: {
-                    overall: 85,
-                    schedule: 90,
-                    budget: 80,
-                    quality: 88,
-                    risks: 75
+            // Fetch actual data from API
+            const dashboardData = await reportService.getDashboardData(projectId, token);
+            
+            // Ensure all required widget data exists with defaults if needed
+            const processedData = {
+                projectHealth: dashboardData.projectHealth || {
+                    overall: 0,
+                    schedule: 0,
+                    budget: 0,
+                    quality: 0,
+                    risks: 0
                 },
-                taskSummary: {
-                    total: 156,
-                    completed: 98,
-                    inProgress: 32,
-                    pending: 21,
-                    overdue: 5,
-                    todaysDue: 3,
-                    thisWeekDue: 12
+                taskSummary: dashboardData.taskSummary || {
+                    total: 0,
+                    completed: 0,
+                    inProgress: 0,
+                    pending: 0,
+                    overdue: 0,
+                    todaysDue: 0,
+                    thisWeekDue: 0
                 },
-                riskOverview: {
-                    total: 15,
-                    critical: 2,
-                    high: 4,
-                    medium: 6,
-                    low: 3,
-                    mitigated: 8,
-                    active: 7
+                riskOverview: dashboardData.riskOverview || {
+                    total: 0,
+                    critical: 0,
+                    high: 0,
+                    medium: 0,
+                    low: 0,
+                    mitigated: 0,
+                    active: 0
                 },
-                budgetStatus: {
-                    total: 100000,
-                    spent: 65000,
-                    remaining: 35000,
-                    projected: 98000,
-                    variance: -2000,
-                    burnRate: 2500
+                budgetStatus: dashboardData.budgetStatus || {
+                    total: dashboardData.projectHealth?.budget || 0,
+                    spent: dashboardData.projectHealth?.spent || 0,
+                    remaining: (dashboardData.projectHealth?.budget || 0) - (dashboardData.projectHealth?.spent || 0),
+                    projected: dashboardData.projectHealth?.projected || 0,
+                    variance: dashboardData.projectHealth?.variance || 0,
+                    burnRate: dashboardData.projectHealth?.burnRate || 0
                 },
-                teamPerformance: {
-                    members: [
-                        { name: 'John Doe', tasks: 28, completed: 22, productivity: 92 },
-                        { name: 'Jane Smith', tasks: 24, completed: 18, productivity: 88 },
-                        { name: 'Bob Johnson', tasks: 32, completed: 25, productivity: 85 },
-                        { name: 'Alice Brown', tasks: 20, completed: 15, productivity: 90 },
-                        { name: 'Charlie Wilson', tasks: 18, completed: 12, productivity: 82 }
-                    ],
-                    averageProductivity: 87.4,
-                    velocityTrend: 'increasing'
+                teamPerformance: dashboardData.teamPerformance || {
+                    members: dashboardData.byAssignee || [],
+                    averageProductivity: dashboardData.performanceMetrics?.averageProductivity || 0,
+                    velocityTrend: dashboardData.performanceMetrics?.velocityTrend || 'stable'
                 },
-                milestones: [
-                    { name: 'Phase 1 Complete', date: '2024-03-31', status: 'completed', progress: 100 },
-                    { name: 'Phase 2 Complete', date: '2024-06-30', status: 'completed', progress: 100 },
-                    { name: 'Phase 3 Complete', date: '2024-09-30', status: 'in_progress', progress: 65 },
-                    { name: 'Project Complete', date: '2024-12-31', status: 'pending', progress: 0 }
-                ],
-                requirementsCoverage: {
-                    total: 85,
-                    covered: 68,
-                    partial: 12,
-                    uncovered: 5,
-                    percentage: 80
+                milestones: dashboardData.milestones || [],
+                requirementsCoverage: dashboardData.requirementsCoverage || {
+                    total: 0,
+                    covered: 0,
+                    partial: 0,
+                    uncovered: 0,
+                    percentage: 0
                 },
-                stakeholderSatisfaction: {
-                    score: 4.2,
-                    trend: 'increasing',
-                    responseRate: 75,
-                    totalStakeholders: 24,
-                    activelyEngaged: 18
+                stakeholderSatisfaction: dashboardData.stakeholderSatisfaction || {
+                    score: dashboardData.stakeholderEngagement?.summary?.engagementRate || 0,
+                    trend: 'stable',
+                    responseRate: dashboardData.stakeholderEngagement?.summary?.responseRate || 0,
+                    totalStakeholders: dashboardData.stakeholderEngagement?.summary?.totalStakeholders || 0,
+                    activelyEngaged: dashboardData.stakeholderEngagement?.summary?.activelyEngaged || 0
                 },
-                projectTimeline: {
-                    startDate: '2024-01-01',
-                    endDate: '2024-12-31',
-                    currentDate: '2024-11-29',
-                    daysElapsed: 333,
-                    daysRemaining: 32,
-                    progressPercentage: 91
+                projectTimeline: dashboardData.projectTimeline || {
+                    startDate: dashboardData.project?.start_date || new Date().toISOString(),
+                    endDate: dashboardData.project?.end_date || new Date().toISOString(),
+                    currentDate: new Date().toISOString(),
+                    daysElapsed: 0,
+                    daysRemaining: 0,
+                    progressPercentage: dashboardData.projectHealth?.overall || 0
                 },
-                issueTracker: {
-                    open: 8,
-                    inProgress: 5,
-                    resolved: 45,
-                    closed: 38,
-                    critical: 2,
-                    avgResolutionTime: 3.5
+                issueTracker: dashboardData.issueTracker || {
+                    open: dashboardData.taskSummary?.pending || 0,
+                    inProgress: dashboardData.taskSummary?.inProgress || 0,
+                    resolved: dashboardData.taskSummary?.completed || 0,
+                    closed: 0,
+                    critical: dashboardData.taskSummary?.overdue || 0,
+                    avgResolutionTime: dashboardData.taskSummary?.averageCompletionTime || 0
                 },
-                velocityChart: {
-                    data: [
-                        { sprint: 'Sprint 1', planned: 20, actual: 18 },
-                        { sprint: 'Sprint 2', planned: 22, actual: 21 },
-                        { sprint: 'Sprint 3', planned: 25, actual: 23 },
-                        { sprint: 'Sprint 4', planned: 24, actual: 26 },
-                        { sprint: 'Sprint 5', planned: 26, actual: 24 }
-                    ]
+                velocityChart: dashboardData.velocityChart || {
+                    data: dashboardData.taskTrends?.daily || []
                 },
-                resourceUtilization: {
-                    development: 85,
-                    design: 70,
-                    testing: 90,
-                    management: 60,
-                    overall: 76
+                resourceUtilization: dashboardData.resourceUtilization || {
+                    development: 75,
+                    design: 60,
+                    testing: 80,
+                    management: 55,
+                    overall: 70
                 }
-            });
+            };
+            
+            setDashboardData(processedData);
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
             toast.error(t('reports.fetchError'));
@@ -242,7 +224,7 @@ const ManagementDashboard = ({ projectId, isDark }) => {
         window.print();
     };
 
-    const handleExport = async () => {
+    const handleExport = async (format = 'pdf') => {
         try {
             const token = await getToken();
             if (!token) {
@@ -250,12 +232,46 @@ const ManagementDashboard = ({ projectId, isDark }) => {
                 return;
             }
 
-            // TODO: Implement actual export
-            toast.success('Dashboard exported successfully');
+            // Export dashboard using the report service
+            await reportService.exportReport(
+                projectId,
+                'dashboard',
+                format,
+                {},
+                token
+            );
+            
+            toast.success(t('reports.dashboardExportedSuccessfully'));
         } catch (error) {
-            toast.error('Failed to export dashboard');
+            console.error('Error exporting dashboard:', error);
+            toast.error(t('reports.failedToExportDashboard'));
         }
     };
+
+    const handleExportMenuEnter = () => {
+        // Clear any existing timeout
+        if (exportMenuTimeoutRef.current) {
+            clearTimeout(exportMenuTimeoutRef.current);
+            exportMenuTimeoutRef.current = null;
+        }
+        setShowExportMenu(true);
+    };
+
+    const handleExportMenuLeave = () => {
+        // Add delay before closing menu
+        exportMenuTimeoutRef.current = setTimeout(() => {
+            setShowExportMenu(false);
+        }, 300);
+    };
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (exportMenuTimeoutRef.current) {
+                clearTimeout(exportMenuTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const renderWidget = (widgetId) => {
         const widget = availableWidgets.find(w => w.id === widgetId);
@@ -613,13 +629,51 @@ const ManagementDashboard = ({ projectId, isDark }) => {
                         >
                             <Printer className="h-4 w-4" />
                         </button>
-                        <button
-                            onClick={handleExport}
-                            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                            title="Export"
+                        <div
+                            className="relative"
+                            onMouseEnter={handleExportMenuEnter}
+                            onMouseLeave={handleExportMenuLeave}
                         >
-                            <Download className="h-4 w-4" />
-                        </button>
+                            <button
+                                className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title="Export"
+                            >
+                                <Download className="h-4 w-4" />
+                            </button>
+                            <div
+                                className={`absolute ${
+                                    showExportMenu ? 'block' : 'hidden'
+                                } right-0 mt-1 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden`}
+                            >
+                                <button
+                                    onClick={() => {
+                                        handleExport('pdf');
+                                        setShowExportMenu(false);
+                                    }}
+                                    className="block w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-left transition-colors"
+                                >
+                                    Export as PDF
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        handleExport('excel');
+                                        setShowExportMenu(false);
+                                    }}
+                                    className="block w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-left transition-colors"
+                                >
+                                    Export as Excel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        handleExport('csv');
+                                        setShowExportMenu(false);
+                                    }}
+                                    className="block w-full px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-left transition-colors"
+                                >
+                                    Export as CSV
+                                </button>
+                            </div>
+                        </div>
                         <button
                             onClick={() => setEditMode(!editMode)}
                             className={`px-3 py-2 rounded flex items-center gap-2 ${

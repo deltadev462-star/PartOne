@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@clerk/clerk-react';
-import { 
+import {
     CheckCircle,
     Circle,
     Clock,
@@ -23,8 +23,9 @@ import {
     Flag
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import reportService from '../../services/reportService';
 
-const TaskProgressReport = ({ projectId, filters, isDark }) => {
+const TaskProgressReport = ({ projectId, filters, isDark, data }) => {
     const { t } = useTranslation();
     const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -71,12 +72,22 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
     });
 
     useEffect(() => {
-        if (projectId) {
+        if (projectId && data) {
+            // If data is passed from parent, use it directly
+            setReportData(data);
+        } else if (projectId && !data) {
+            // Only fetch if we have a projectId but no data passed from parent
             fetchReportData();
         }
-    }, [projectId, filters]);
+    }, [projectId, filters, data]);
 
     const fetchReportData = async () => {
+        if (data) {
+            // If data is passed from parent, use it directly
+            setReportData(data);
+            return;
+        }
+
         setLoading(true);
         try {
             const token = await getToken();
@@ -85,95 +96,13 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                 return;
             }
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/task-progress/${projectId}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setReportData(data);
-
-            // Simulated data
-            setReportData({
-                summary: {
-                    totalTasks: 156,
-                    completedTasks: 98,
-                    inProgressTasks: 32,
-                    pendingTasks: 21,
-                    overdueTasks: 5,
-                    completionRate: 63,
-                    averageCompletionTime: 3.5,
-                    tasksCreatedThisPeriod: 24,
-                    tasksCompletedThisPeriod: 18
-                },
-                byStatus: {
-                    todo: { count: 21, percentage: 13, tasks: [
-                        { id: 1, title: 'Setup CI/CD pipeline', priority: 'HIGH', assignee: 'John Doe', dueDate: '2024-12-10' },
-                        { id: 2, title: 'Write API documentation', priority: 'MEDIUM', assignee: 'Jane Smith', dueDate: '2024-12-15' }
-                    ]},
-                    inProgress: { count: 32, percentage: 21, tasks: [
-                        { id: 3, title: 'Implement user authentication', priority: 'HIGH', assignee: 'Bob Johnson', dueDate: '2024-12-05' },
-                        { id: 4, title: 'Design dashboard UI', priority: 'MEDIUM', assignee: 'Alice Brown', dueDate: '2024-12-08' }
-                    ]},
-                    inReview: { count: 8, percentage: 5, tasks: [] },
-                    completed: { count: 98, percentage: 63, tasks: [] },
-                    cancelled: { count: 0, percentage: 0, tasks: [] }
-                },
-                byAssignee: [
-                    { name: 'John Doe', avatar: null, totalTasks: 28, completed: 18, inProgress: 6, pending: 4, completionRate: 64, overdue: 1 },
-                    { name: 'Jane Smith', avatar: null, totalTasks: 24, completed: 15, inProgress: 5, pending: 4, completionRate: 63, overdue: 0 },
-                    { name: 'Bob Johnson', avatar: null, totalTasks: 32, completed: 20, inProgress: 8, pending: 4, completionRate: 63, overdue: 2 },
-                    { name: 'Alice Brown', avatar: null, totalTasks: 20, completed: 12, inProgress: 4, pending: 4, completionRate: 60, overdue: 1 },
-                    { name: 'Charlie Wilson', avatar: null, totalTasks: 18, completed: 10, inProgress: 5, pending: 3, completionRate: 56, overdue: 1 }
-                ],
-                byPriority: {
-                    high: { count: 45, percentage: 29, tasks: [] },
-                    medium: { count: 78, percentage: 50, tasks: [] },
-                    low: { count: 33, percentage: 21, tasks: [] }
-                },
-                overdueList: [
-                    { id: 5, title: 'Security audit', assignee: 'John Doe', daysOverdue: 3, priority: 'HIGH' },
-                    { id: 6, title: 'Performance testing', assignee: 'Bob Johnson', daysOverdue: 2, priority: 'HIGH' },
-                    { id: 7, title: 'Update dependencies', assignee: 'Jane Smith', daysOverdue: 1, priority: 'MEDIUM' },
-                    { id: 8, title: 'Code review', assignee: 'Alice Brown', daysOverdue: 1, priority: 'LOW' },
-                    { id: 9, title: 'Documentation update', assignee: 'Charlie Wilson', daysOverdue: 5, priority: 'LOW' }
-                ],
-                upcomingDeadlines: [
-                    { id: 10, title: 'Deploy to staging', assignee: 'John Doe', dueDate: '2024-12-01', daysUntilDue: 2 },
-                    { id: 11, title: 'User testing session', assignee: 'Jane Smith', dueDate: '2024-12-02', daysUntilDue: 3 },
-                    { id: 12, title: 'Sprint review', assignee: 'Bob Johnson', dueDate: '2024-12-03', daysUntilDue: 4 }
-                ],
-                recentlyCompleted: [
-                    { id: 13, title: 'Database schema design', completedBy: 'John Doe', completedDate: '2024-11-28', onTime: true },
-                    { id: 14, title: 'API endpoint implementation', completedBy: 'Jane Smith', completedDate: '2024-11-27', onTime: false },
-                    { id: 15, title: 'Frontend components', completedBy: 'Bob Johnson', completedDate: '2024-11-26', onTime: true }
-                ],
-                taskTrends: {
-                    daily: [
-                        { date: '2024-11-25', created: 5, completed: 3 },
-                        { date: '2024-11-26', created: 4, completed: 6 },
-                        { date: '2024-11-27', created: 6, completed: 4 },
-                        { date: '2024-11-28', created: 3, completed: 5 },
-                        { date: '2024-11-29', created: 6, completed: 3 }
-                    ],
-                    weekly: [
-                        { week: 'W47', created: 22, completed: 18 },
-                        { week: 'W48', created: 25, completed: 21 },
-                        { week: 'W49', created: 24, completed: 18 }
-                    ]
-                },
-                performanceMetrics: {
-                    onTimeDelivery: 75,
-                    averageTaskAge: 5.2,
-                    velocityTrend: 'increasing',
-                    blockedTasks: 3,
-                    reworkRate: 8
-                }
-            });
+            // Fetch actual data from API
+            const reportData = await reportService.getTaskProgressReport(projectId, filters, token);
+            setReportData(reportData || {});
         } catch (error) {
             console.error('Error fetching task progress report:', error);
             toast.error(t('reports.fetchError'));
+            setReportData({});
         } finally {
             setLoading(false);
         }
@@ -207,7 +136,47 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
         );
     }
 
-    const { summary, byStatus, byAssignee, byPriority, overdueList, upcomingDeadlines, recentlyCompleted, taskTrends, performanceMetrics } = reportData;
+    // Ensure we have default values to prevent undefined errors
+    const {
+        summary = {
+            totalTasks: 0,
+            completedTasks: 0,
+            inProgressTasks: 0,
+            pendingTasks: 0,
+            overdueTasks: 0,
+            completionRate: 0,
+            averageCompletionTime: 0,
+            tasksCreatedThisPeriod: 0,
+            tasksCompletedThisPeriod: 0
+        },
+        byStatus = {
+            todo: { count: 0, percentage: 0, tasks: [] },
+            inProgress: { count: 0, percentage: 0, tasks: [] },
+            inReview: { count: 0, percentage: 0, tasks: [] },
+            completed: { count: 0, percentage: 0, tasks: [] },
+            cancelled: { count: 0, percentage: 0, tasks: [] }
+        },
+        byAssignee = [],
+        byPriority = {
+            high: { count: 0, percentage: 0, tasks: [] },
+            medium: { count: 0, percentage: 0, tasks: [] },
+            low: { count: 0, percentage: 0, tasks: [] }
+        },
+        overdueList = [],
+        upcomingDeadlines = [],
+        recentlyCompleted = [],
+        taskTrends = {
+            daily: [],
+            weekly: []
+        },
+        performanceMetrics = {
+            onTimeDelivery: 0,
+            averageTaskAge: 0,
+            velocityTrend: 'stable',
+            blockedTasks: 0,
+            reworkRate: 0
+        }
+    } = reportData || {};
 
     return (
         <div className="p-6">
@@ -343,7 +312,7 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                             {t('reports.overdueTasks')}
                         </h3>
                         <div className="space-y-3">
-                            {overdueList.map((task, index) => (
+                            {overdueList && overdueList.length > 0 ? overdueList.map((task, index) => (
                                 <div key={index} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                                     <div className="flex-1">
                                         <p className="font-medium">{task.title}</p>
@@ -359,7 +328,11 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                                         {task.priority}
                                     </span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {t('reports.noOverdueTasks') || 'No overdue tasks'}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -370,7 +343,7 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                             {t('reports.upcomingDeadlines')}
                         </h3>
                         <div className="space-y-3">
-                            {upcomingDeadlines.map((task, index) => (
+                            {upcomingDeadlines && upcomingDeadlines.length > 0 ? upcomingDeadlines.map((task, index) => (
                                 <div key={index} className="flex items-center justify-between">
                                     <div>
                                         <p className="font-medium">{task.title}</p>
@@ -386,7 +359,11 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                                         {task.daysUntilDue} {t('reports.daysUntilDue')}
                                     </span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                    {t('reports.noUpcomingDeadlines') || 'No upcoming deadlines'}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -431,7 +408,7 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {byAssignee.map((assignee, index) => (
+                                {byAssignee && byAssignee.length > 0 ? byAssignee.map((assignee, index) => (
                                     <tr key={index} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
                                         <td className="py-3 flex items-center gap-2">
                                             <User className="h-4 w-4" />
@@ -454,7 +431,15 @@ const TaskProgressReport = ({ projectId, filters, isDark }) => {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                )) : (
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-4">
+                                            <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                {t('reports.noAssigneeData') || 'No assignee data available'}
+                                            </p>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

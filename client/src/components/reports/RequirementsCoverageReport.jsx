@@ -25,7 +25,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
+import reportService from '../../services/reportService';
+
+const RequirementsCoverageReport = ({ projectId, filters, isDark, data }) => {
     const { t } = useTranslation();
     const { getToken } = useAuth();
     const [loading, setLoading] = useState(false);
@@ -77,12 +79,34 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
     });
 
     useEffect(() => {
-        if (projectId) {
+        if (projectId && data) {
+            // If data is passed from parent, merge it with default structure
+            setReportData(prevData => ({
+                ...prevData,
+                summary: data.summary || prevData.summary,
+                byType: data.byType || prevData.byType,
+                byPriority: data.byPriority || prevData.byPriority,
+                traceabilityMatrix: data.traceabilityMatrix || prevData.traceabilityMatrix,
+                coverageDetails: data.coverageDetails || prevData.coverageDetails,
+                gaps: data.gaps || prevData.gaps,
+                testCoverage: data.testCoverage || prevData.testCoverage,
+                implementationStatus: data.implementationStatus || prevData.implementationStatus
+            }));
+        } else if (projectId && !data) {
             fetchReportData();
         }
-    }, [projectId, filters]);
+    }, [projectId, filters, data]);
 
     const fetchReportData = async () => {
+        if (data) {
+            // If data is passed from parent, merge it with defaults
+            setReportData(prevData => ({
+                ...prevData,
+                ...data
+            }));
+            return;
+        }
+
         setLoading(true);
         try {
             const token = await getToken();
@@ -91,161 +115,13 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                 return;
             }
 
-            // TODO: Replace with actual API call
-            // const response = await fetch(`/api/reports/requirements-coverage/${projectId}`, {
-            //     headers: {
-            //         Authorization: `Bearer ${token}`
-            //     }
-            // });
-            // const data = await response.json();
-            // setReportData(data);
-
-            // Simulated data
-            setReportData({
-                summary: {
-                    totalRequirements: 85,
-                    coveredRequirements: 68,
-                    partialCoverage: 12,
-                    noCoverage: 5,
-                    coveragePercentage: 80,
-                    requirementsWithTests: 62,
-                    requirementsWithTasks: 75,
-                    requirementsImplemented: 58
-                },
-                byType: {
-                    functional: { total: 45, covered: 40, percentage: 89 },
-                    nonFunctional: { total: 20, covered: 15, percentage: 75 },
-                    technical: { total: 12, covered: 8, percentage: 67 },
-                    business: { total: 8, covered: 5, percentage: 63 }
-                },
-                byPriority: {
-                    critical: { total: 15, covered: 15, percentage: 100 },
-                    high: { total: 25, covered: 23, percentage: 92 },
-                    medium: { total: 30, covered: 22, percentage: 73 },
-                    low: { total: 15, covered: 8, percentage: 53 }
-                },
-                traceabilityMatrix: {
-                    requirements: [
-                        { id: 'REQ-001', title: 'User Authentication', priority: 'CRITICAL', type: 'Functional' },
-                        { id: 'REQ-002', title: 'Dashboard Analytics', priority: 'HIGH', type: 'Functional' },
-                        { id: 'REQ-003', title: 'Data Export', priority: 'MEDIUM', type: 'Functional' },
-                        { id: 'REQ-004', title: 'Performance Optimization', priority: 'HIGH', type: 'Non-Functional' },
-                        { id: 'REQ-005', title: 'Security Compliance', priority: 'CRITICAL', type: 'Non-Functional' }
-                    ],
-                    tasks: [
-                        { id: 'TASK-001', title: 'Implement JWT authentication' },
-                        { id: 'TASK-002', title: 'Create dashboard components' },
-                        { id: 'TASK-003', title: 'Add export functionality' },
-                        { id: 'TASK-004', title: 'Optimize database queries' },
-                        { id: 'TASK-005', title: 'Security audit' }
-                    ],
-                    tests: [
-                        { id: 'TEST-001', title: 'Authentication test suite' },
-                        { id: 'TEST-002', title: 'Dashboard integration tests' },
-                        { id: 'TEST-003', title: 'Export feature tests' },
-                        { id: 'TEST-004', title: 'Performance benchmarks' },
-                        { id: 'TEST-005', title: 'Security penetration tests' }
-                    ],
-                    mappings: [
-                        { requirementId: 'REQ-001', taskIds: ['TASK-001'], testIds: ['TEST-001'] },
-                        { requirementId: 'REQ-002', taskIds: ['TASK-002'], testIds: ['TEST-002'] },
-                        { requirementId: 'REQ-003', taskIds: ['TASK-003'], testIds: ['TEST-003'] },
-                        { requirementId: 'REQ-004', taskIds: ['TASK-004'], testIds: ['TEST-004'] },
-                        { requirementId: 'REQ-005', taskIds: ['TASK-005'], testIds: ['TEST-005'] }
-                    ]
-                },
-                coverageDetails: [
-                    { 
-                        id: 'REQ-001', 
-                        title: 'User Authentication', 
-                        priority: 'CRITICAL',
-                        hasTasks: true, 
-                        hasTests: true, 
-                        implemented: true, 
-                        verified: true,
-                        coverage: 100 
-                    },
-                    { 
-                        id: 'REQ-002', 
-                        title: 'Dashboard Analytics', 
-                        priority: 'HIGH',
-                        hasTasks: true, 
-                        hasTests: true, 
-                        implemented: true, 
-                        verified: false,
-                        coverage: 85 
-                    },
-                    { 
-                        id: 'REQ-003', 
-                        title: 'Data Export', 
-                        priority: 'MEDIUM',
-                        hasTasks: true, 
-                        hasTests: false, 
-                        implemented: false, 
-                        verified: false,
-                        coverage: 40 
-                    },
-                    { 
-                        id: 'REQ-004', 
-                        title: 'Performance Optimization', 
-                        priority: 'HIGH',
-                        hasTasks: true, 
-                        hasTests: true, 
-                        implemented: false, 
-                        verified: false,
-                        coverage: 60 
-                    },
-                    { 
-                        id: 'REQ-005', 
-                        title: 'Security Compliance', 
-                        priority: 'CRITICAL',
-                        hasTasks: false, 
-                        hasTests: false, 
-                        implemented: false, 
-                        verified: false,
-                        coverage: 0 
-                    }
-                ],
-                gaps: [
-                    { 
-                        requirement: 'REQ-005', 
-                        title: 'Security Compliance', 
-                        type: 'No Tasks', 
-                        severity: 'CRITICAL',
-                        description: 'No tasks assigned to this critical requirement' 
-                    },
-                    { 
-                        requirement: 'REQ-003', 
-                        title: 'Data Export', 
-                        type: 'No Tests', 
-                        severity: 'MEDIUM',
-                        description: 'Missing test coverage for export functionality' 
-                    },
-                    { 
-                        requirement: 'REQ-004', 
-                        title: 'Performance Optimization', 
-                        type: 'Not Implemented', 
-                        severity: 'HIGH',
-                        description: 'Tasks exist but implementation not started' 
-                    }
-                ],
-                testCoverage: {
-                    totalTests: 45,
-                    passingTests: 38,
-                    failingTests: 3,
-                    pendingTests: 4,
-                    testExecutionRate: 84
-                },
-                implementationStatus: {
-                    notStarted: 15,
-                    inProgress: 12,
-                    implemented: 48,
-                    verified: 10
-                }
-            });
+            // Fetch actual data from API
+            const reportData = await reportService.getRequirementsCoverageReport(projectId, filters, token);
+            setReportData(reportData || {});
         } catch (error) {
             console.error('Error fetching requirements coverage report:', error);
             toast.error(t('reports.fetchError'));
+            setReportData({});
         } finally {
             setLoading(false);
         }
@@ -273,7 +149,52 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
         );
     }
 
-    const { summary, byType, byPriority, traceabilityMatrix, coverageDetails, gaps, testCoverage, implementationStatus } = reportData;
+    // Ensure we have default values to prevent undefined errors
+    const {
+        summary = {
+            totalRequirements: 0,
+            coveredRequirements: 0,
+            partialCoverage: 0,
+            noCoverage: 0,
+            coveragePercentage: 0,
+            requirementsWithTests: 0,
+            requirementsWithTasks: 0,
+            requirementsImplemented: 0
+        },
+        byType = {
+            functional: { total: 0, covered: 0, percentage: 0 },
+            nonFunctional: { total: 0, covered: 0, percentage: 0 },
+            technical: { total: 0, covered: 0, percentage: 0 },
+            business: { total: 0, covered: 0, percentage: 0 }
+        },
+        byPriority = {
+            critical: { total: 0, covered: 0, percentage: 0 },
+            high: { total: 0, covered: 0, percentage: 0 },
+            medium: { total: 0, covered: 0, percentage: 0 },
+            low: { total: 0, covered: 0, percentage: 0 }
+        },
+        traceabilityMatrix = {
+            requirements: [],
+            tasks: [],
+            tests: [],
+            mappings: []
+        },
+        coverageDetails = [],
+        gaps = [],
+        testCoverage = {
+            totalTests: 0,
+            passingTests: 0,
+            failingTests: 0,
+            pendingTests: 0,
+            testExecutionRate: 0
+        },
+        implementationStatus = {
+            notStarted: 0,
+            inProgress: 0,
+            implemented: 0,
+            verified: 0
+        }
+    } = reportData || {};
 
     return (
         <div className="p-6">
@@ -349,7 +270,7 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                             {t('reports.coverageByType')}
                         </h3>
                         <div className="space-y-4">
-                            {Object.entries(byType).map(([type, data]) => (
+                            {byType && Object.entries(byType).map(([type, data]) => (
                                 <div key={type}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="font-medium capitalize">{type}</span>
@@ -373,7 +294,7 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                             {t('reports.coverageByPriority')}
                         </h3>
                         <div className="space-y-4">
-                            {Object.entries(byPriority).map(([priority, data]) => {
+                            {byPriority && Object.entries(byPriority).map(([priority, data]) => {
                                 const Icon = getCoverageIcon(data.percentage);
                                 return (
                                     <div key={priority} className="flex items-center gap-4">
@@ -405,19 +326,19 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('reports.totalTests')}</p>
-                                <p className="text-xl font-bold">{testCoverage.totalTests}</p>
+                                <p className="text-xl font-bold">{testCoverage?.totalTests || 0}</p>
                             </div>
                             <div>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('reports.passing')}</p>
-                                <p className="text-xl font-bold text-green-500">{testCoverage.passingTests}</p>
+                                <p className="text-xl font-bold text-green-500">{testCoverage?.passingTests || 0}</p>
                             </div>
                             <div>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('reports.failing')}</p>
-                                <p className="text-xl font-bold text-red-500">{testCoverage.failingTests}</p>
+                                <p className="text-xl font-bold text-red-500">{testCoverage?.failingTests || 0}</p>
                             </div>
                             <div>
                                 <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{t('reports.pending')}</p>
-                                <p className="text-xl font-bold text-yellow-500">{testCoverage.pendingTests}</p>
+                                <p className="text-xl font-bold text-yellow-500">{testCoverage?.pendingTests || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -443,7 +364,7 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {traceabilityMatrix.requirements.map((req, index) => {
+                                {traceabilityMatrix?.requirements && traceabilityMatrix.requirements.map((req, index) => {
                                     const mapping = traceabilityMatrix.mappings.find(m => m.requirementId === req.id);
                                     return (
                                         <tr key={index} className={`border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -497,7 +418,7 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                 <div className={`rounded-lg p-6 ${isDark ? 'bg-gray-800' : 'bg-white'} shadow`}>
                     <h3 className="text-lg font-semibold mb-4">{t('reports.detailedCoverage')}</h3>
                     <div className="space-y-4">
-                        {coverageDetails.map((requirement, index) => (
+                        {coverageDetails && coverageDetails.length > 0 && coverageDetails.map((requirement, index) => (
                             <div key={index} className={`p-4 rounded-lg ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                     <div>
@@ -564,7 +485,7 @@ const RequirementsCoverageReport = ({ projectId, filters, isDark }) => {
                         {t('reports.coverageGaps')}
                     </h3>
                     <div className="space-y-4">
-                        {gaps.map((gap, index) => (
+                        {gaps && gaps.length > 0 && gaps.map((gap, index) => (
                             <div key={index} className={`p-4 rounded-lg border-l-4 ${
                                 gap.severity === 'CRITICAL' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' :
                                 gap.severity === 'HIGH' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' :
