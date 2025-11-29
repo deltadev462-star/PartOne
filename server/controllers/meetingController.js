@@ -829,7 +829,7 @@ const createRecurringMeetings = async (baseMeeting, pattern, endDate) => {
     }
 };
 
-module.exports = {
+export {
     getMeetings,
     getMeetingById,
     createMeeting,
