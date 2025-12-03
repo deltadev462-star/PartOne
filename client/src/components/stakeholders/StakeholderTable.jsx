@@ -144,7 +144,7 @@ const StakeholderTable = ({
                   {t("stakeholders.influenceInterest")}
                 </th>
                 <th className={`w-[16%] min-w-[150px] px-3 py-3 ${isRTL ? 'text-right' : 'text-left'} text-xs font-medium text-gray-500 dark:text-zinc-400 ${isRTL ? '' : 'uppercase'} tracking-wider`}>
-                  {t("stakeholders.engagement")}
+                  {t("stakeholders.engagementLabel")}
                 </th>
                 <th className={`w-[10%] min-w-[90px] px-3 py-3 text-center text-xs font-medium text-gray-500 dark:text-zinc-400 ${isRTL ? '' : 'uppercase'} tracking-wider`}>
                   {t("stakeholders.actions")}

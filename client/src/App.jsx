@@ -6,7 +6,7 @@ import Layout from "./pages/Layout";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Team = lazy(() => import("./pages/Team"));
-const Stakeholders = lazy(() => import("./pages/Stakeholders"));
+const Stakeholders = lazy(() => import("./pages/StakeholdersEnhanced"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const MyTasks = lazy(() => import("./pages/MyTasks"));
 const ProjectDetails = lazy(() => import("./pages/ProjectDetails"));
